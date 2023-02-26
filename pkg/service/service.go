@@ -8,29 +8,38 @@ import (
 	"syscall"
 
 	"github.com/galdor/go-program"
+	"github.com/galdor/go-service/pkg/log"
 )
 
 type ServiceImplementation interface {
+	ServiceCfg() (ServiceCfg, error)
 	Init(*Service) error
 	Start(*Service) error
 	Stop(*Service)
 	Terminate(*Service)
 }
 
-type Service struct {
-	Name        string
-	Description string
+type ServiceCfg struct {
+	name string
 
+	Logger *log.LoggerCfg
+}
+
+type Service struct {
+	Cfg ServiceCfg
+	Log *log.Logger
+
+	Name           string
 	Implementation ServiceImplementation
 
 	Context context.Context
 }
 
-func newService(name, description string, implementation ServiceImplementation, ctx context.Context) *Service {
+func newService(cfg ServiceCfg, implementation ServiceImplementation, ctx context.Context) *Service {
 	s := Service{
-		Name:        name,
-		Description: description,
+		Cfg: cfg,
 
+		Name:           cfg.name,
 		Implementation: implementation,
 
 		Context: ctx,
@@ -40,9 +49,36 @@ func newService(name, description string, implementation ServiceImplementation, 
 }
 
 func (s *Service) init() error {
+	s.Log = log.DefaultLogger(s.Name)
+
+	initFuncs := []func() error{
+		s.initLogger,
+	}
+
+	for _, initFunc := range initFuncs {
+		if err := initFunc(); err != nil {
+			return err
+		}
+	}
+
 	if err := s.Implementation.Init(s); err != nil {
 		return err
 	}
+
+	return nil
+}
+
+func (s *Service) initLogger() error {
+	if s.Cfg.Logger == nil {
+		return nil
+	}
+
+	logger, err := log.NewLogger(s.Name, *s.Cfg.Logger)
+	if err != nil {
+		return fmt.Errorf("invalid logger configuration: %w", err)
+	}
+
+	s.Log = logger
 
 	return nil
 }
@@ -62,7 +98,7 @@ func (s *Service) wait() {
 	select {
 	case signo := <-sigChan:
 		fmt.Println()
-		fmt.Fprintf(os.Stderr, "received signal %d (%v)\n", signo, signo)
+		s.Log.Info("received signal %d (%v)", signo, signo)
 
 	case <-s.Context.Done():
 	}
@@ -96,10 +132,20 @@ func Run(name, description string, implementation ServiceImplementation) {
 	p.ParseCommandLine()
 
 	// Configuration
-	// TODO
+	serviceCfg, err := implementation.ServiceCfg()
+	if err != nil {
+		p.Fatal("invalid configuration: %v", err)
+	}
+
+	serviceCfg.name = name
+
+	if p.IsOptionSet("validate-cfg") {
+		p.Info("configuration validated successfully")
+		return
+	}
 
 	// Service
-	s := newService(name, description, implementation, ctx)
+	s := newService(serviceCfg, implementation, ctx)
 
 	if err := s.init(); err != nil {
 		p.Fatal("cannot initialize service: %v", err)

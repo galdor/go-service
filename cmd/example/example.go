@@ -5,6 +5,11 @@ import "github.com/galdor/go-service/pkg/service"
 type Example struct {
 }
 
+func (s *Example) ServiceCfg() (service.ServiceCfg, error) {
+	cfg := service.ServiceCfg{}
+	return cfg, nil
+}
+
 func (s *Example) Init(*service.Service) error {
 	return nil
 }
