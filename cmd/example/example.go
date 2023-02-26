@@ -1,27 +1,48 @@
 package main
 
-import "github.com/galdor/go-service/pkg/service"
+import (
+	"github.com/galdor/go-service/pkg/log"
+	"github.com/galdor/go-service/pkg/service"
+)
 
-type Example struct {
+type ExampleCfg struct {
+	Logger *log.LoggerCfg `json:"logger"`
 }
 
-func (s *Example) ServiceCfg() (service.ServiceCfg, error) {
-	cfg := service.ServiceCfg{}
+type Example struct {
+	Cfg ExampleCfg
+	Log *log.Logger
+}
+
+func (e *Example) DefaultImplementationCfg() interface{} {
+	return &e.Cfg
+}
+
+func (e *Example) ValidateImplementationCfg() error {
+	return nil
+}
+
+func (e *Example) ServiceCfg() (service.ServiceCfg, error) {
+	cfg := service.ServiceCfg{
+		Logger: e.Cfg.Logger,
+	}
+
 	return cfg, nil
 }
 
-func (s *Example) Init(*service.Service) error {
+func (e *Example) Init(s *service.Service) error {
+	e.Log = s.Log
 	return nil
 }
 
-func (s *Example) Start(*service.Service) error {
+func (e *Example) Start(s *service.Service) error {
 	return nil
 }
 
-func (s *Example) Stop(*service.Service) {
+func (e *Example) Stop(s *service.Service) {
 }
 
-func (s *Example) Terminate(*service.Service) {
+func (e *Example) Terminate(s *service.Service) {
 }
 
 func NewExample() *Example {

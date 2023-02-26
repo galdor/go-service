@@ -12,6 +12,8 @@ import (
 )
 
 type ServiceImplementation interface {
+	DefaultImplementationCfg() interface{}
+	ValidateImplementationCfg() error
 	ServiceCfg() (ServiceCfg, error)
 	Init(*Service) error
 	Start(*Service) error
@@ -132,6 +134,21 @@ func Run(name, description string, implementation ServiceImplementation) {
 	p.ParseCommandLine()
 
 	// Configuration
+	implementationCfg := implementation.DefaultImplementationCfg()
+	if p.IsOptionSet("cfg-file") {
+		cfgPath := p.OptionValue("cfg-file")
+
+		p.Info("loading configuration from %q", cfgPath)
+
+		if err := LoadCfg(cfgPath, implementationCfg); err != nil {
+			p.Fatal("cannot load configuration: %v", err)
+		}
+
+		if err := implementation.ValidateImplementationCfg(); err != nil {
+			p.Fatal("invalid configuration: %v", err)
+		}
+	}
+
 	serviceCfg, err := implementation.ServiceCfg()
 	if err != nil {
 		p.Fatal("invalid configuration: %v", err)

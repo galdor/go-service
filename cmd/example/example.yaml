@@ -1,0 +1,4 @@
+logger:
+  backend_type: "terminal"
+  backend:
+    color: true
