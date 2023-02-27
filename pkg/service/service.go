@@ -9,6 +9,7 @@ import (
 	"github.com/galdor/go-program"
 	"github.com/galdor/go-service/pkg/log"
 	"github.com/galdor/go-service/pkg/pg"
+	"github.com/galdor/go-service/pkg/utils"
 )
 
 type ServiceImplementation interface {
@@ -39,7 +40,7 @@ func NewServiceCfg() *ServiceCfg {
 
 func (cfg *ServiceCfg) AddPgClient(name string, clientCfg pg.ClientCfg) {
 	if _, found := cfg.PgClients[name]; found {
-		panic(fmt.Sprintf("duplicate pg client %q", name))
+		utils.Panicf("duplicate pg client %q", name)
 	}
 
 	cfg.PgClients[name] = clientCfg
@@ -238,27 +239,22 @@ func Run(name, description string, implementation ServiceImplementation) {
 }
 
 func RunTest(name string, implementation ServiceImplementation, cfgPath string, readyChan chan<- struct{}) {
-	abort := func(format string, args ...interface{}) {
-		fmt.Fprintf(os.Stderr, format+"\n", args...)
-		os.Exit(1)
-	}
-
 	// Configuration
 	implementationCfg := implementation.DefaultImplementationCfg()
 
 	if cfgPath != "" {
 		if err := LoadCfg(cfgPath, implementationCfg); err != nil {
-			abort("cannot load configuration: %v", err)
+			utils.Abort("cannot load configuration: %v", err)
 		}
 
 		if err := implementation.ValidateImplementationCfg(); err != nil {
-			abort("invalid configuration: %v", err)
+			utils.Abort("invalid configuration: %v", err)
 		}
 	}
 
 	serviceCfg, err := implementation.ServiceCfg()
 	if err != nil {
-		abort("invalid configuration: %v", err)
+		utils.Abort("invalid configuration: %v", err)
 	}
 
 	serviceCfg.name = name
@@ -267,11 +263,11 @@ func RunTest(name string, implementation ServiceImplementation, cfgPath string, 
 	s := newService(serviceCfg, implementation)
 
 	if err := s.init(); err != nil {
-		abort("cannot initialize service: %v", err)
+		utils.Abort("cannot initialize service: %v", err)
 	}
 
 	if err := s.start(); err != nil {
-		abort("cannot start service: %v", err)
+		utils.Abort("cannot start service: %v", err)
 	}
 
 	close(readyChan)
@@ -294,7 +290,7 @@ func (s *Service) Stop() {
 func (s *Service) PgClient(name string) *pg.Client {
 	c, found := s.PgClients[name]
 	if !found {
-		panic(fmt.Sprintf("unknown pg client %q", name))
+		utils.Panicf("unknown pg client %q", name)
 	}
 
 	return c
