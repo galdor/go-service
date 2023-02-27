@@ -8,7 +8,7 @@ Go-service is open source software distributed under the
 
 # Contributions
 ## Open source, not open contribution
-[Similar to SQLite](https://www.sqlite.org/copyright.html), Go-service is open
+[Similar to SQLite](https://www.sqlite.org/copyright.html), go-service is open
 source but not open contribution for multiple reasons:
 
 - It avoid potential intellectual property and licensing issues.
