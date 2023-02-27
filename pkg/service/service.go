@@ -142,6 +142,9 @@ func (s *Service) wait() {
 
 	select {
 	case signo := <-sigChan:
+		// Cosmetic fix to avoid having "^C" displayed before the next log
+		// line in shells which print interrupting characters.
+		fmt.Fprintln(os.Stderr)
 		s.Log.Info("received signal %d (%v)", signo, signo)
 
 	case <-s.stopChan:
