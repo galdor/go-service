@@ -14,6 +14,10 @@ type Example struct {
 	Log *log.Logger
 }
 
+func NewExample() *Example {
+	return &Example{}
+}
+
 func (e *Example) DefaultImplementationCfg() interface{} {
 	return &e.Cfg
 }
@@ -43,10 +47,6 @@ func (e *Example) Stop(s *service.Service) {
 }
 
 func (e *Example) Terminate(s *service.Service) {
-}
-
-func NewExample() *Example {
-	return &Example{}
 }
 
 func main() {

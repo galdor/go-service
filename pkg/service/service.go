@@ -34,7 +34,9 @@ type Service struct {
 	Name           string
 	Implementation ServiceImplementation
 
-	Context context.Context
+	stopChan        chan struct{} // used to interrupt wait()
+	errorChan       chan error    // used to signal a fatal error
+	terminationChan chan struct{} // used to wait for termination in Stop()
 }
 
 func newService(cfg ServiceCfg, implementation ServiceImplementation, ctx context.Context) *Service {
@@ -44,7 +46,9 @@ func newService(cfg ServiceCfg, implementation ServiceImplementation, ctx contex
 		Name:           cfg.name,
 		Implementation: implementation,
 
-		Context: ctx,
+		stopChan:        make(chan struct{}, 1),
+		errorChan:       make(chan error),
+		terminationChan: make(chan struct{}),
 	}
 
 	return &s
@@ -99,10 +103,13 @@ func (s *Service) wait() {
 
 	select {
 	case signo := <-sigChan:
-		fmt.Println()
 		s.Log.Info("received signal %d (%v)", signo, signo)
 
-	case <-s.Context.Done():
+	case <-s.stopChan:
+
+	case err := <-s.errorChan:
+		s.Log.Error("service error: %v", err)
+		os.Exit(1)
 	}
 }
 
@@ -114,6 +121,10 @@ func (s *Service) stop() error {
 
 func (s *Service) terminate() error {
 	s.Implementation.Terminate(s)
+
+	close(s.stopChan)
+	close(s.errorChan)
+	close(s.terminationChan)
 
 	return nil
 }
@@ -135,6 +146,7 @@ func Run(name, description string, implementation ServiceImplementation) {
 
 	// Configuration
 	implementationCfg := implementation.DefaultImplementationCfg()
+
 	if p.IsOptionSet("cfg-file") {
 		cfgPath := p.OptionValue("cfg-file")
 
@@ -177,4 +189,62 @@ func Run(name, description string, implementation ServiceImplementation) {
 	s.stop()
 
 	s.terminate()
+}
+
+func RunTest(name string, implementation ServiceImplementation, cfgPath string, readyChan chan<- struct{}) {
+	abort := func(format string, args ...interface{}) {
+		fmt.Fprintf(os.Stderr, format+"\n", args...)
+		os.Exit(1)
+	}
+
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	// Configuration
+	implementationCfg := implementation.DefaultImplementationCfg()
+
+	if cfgPath != "" {
+		if err := LoadCfg(cfgPath, implementationCfg); err != nil {
+			abort("cannot load configuration: %v", err)
+		}
+
+		if err := implementation.ValidateImplementationCfg(); err != nil {
+			abort("invalid configuration: %v", err)
+		}
+	}
+
+	serviceCfg, err := implementation.ServiceCfg()
+	if err != nil {
+		abort("invalid configuration: %v", err)
+	}
+
+	serviceCfg.name = name
+
+	// Service
+	s := newService(serviceCfg, implementation, ctx)
+
+	if err := s.init(); err != nil {
+		abort("cannot initialize service: %v", err)
+	}
+
+	if err := s.start(); err != nil {
+		abort("cannot start service: %v", err)
+	}
+
+	close(readyChan)
+
+	s.wait()
+
+	s.stop()
+
+	s.terminate()
+}
+
+func (s *Service) Stop() {
+	s.stopChan <- struct{}{}
+
+	select {
+	case <-s.terminationChan:
+	}
 }
