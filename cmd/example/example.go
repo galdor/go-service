@@ -2,11 +2,13 @@ package main
 
 import (
 	"github.com/galdor/go-service/pkg/log"
+	"github.com/galdor/go-service/pkg/pg"
 	"github.com/galdor/go-service/pkg/service"
 )
 
 type ExampleCfg struct {
 	Logger *log.LoggerCfg `json:"logger"`
+	Pg     pg.ClientCfg   `json:"pg"`
 }
 
 type Example struct {
@@ -30,6 +32,8 @@ func (e *Example) ServiceCfg() (*service.ServiceCfg, error) {
 	cfg := service.NewServiceCfg()
 
 	cfg.Logger = e.Cfg.Logger
+
+	cfg.AddPgClient("main", e.Cfg.Pg)
 
 	return cfg, nil
 }

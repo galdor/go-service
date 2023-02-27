@@ -2,3 +2,7 @@ logger:
   backendType: "terminal"
   backend:
     color: true
+
+pg:
+  uri: "postgres://postgres:postgres@localhost:5432/service"
+  application_name: "service"
