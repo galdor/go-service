@@ -26,10 +26,10 @@ func (e *Example) ValidateImplementationCfg() error {
 	return nil
 }
 
-func (e *Example) ServiceCfg() (service.ServiceCfg, error) {
-	cfg := service.ServiceCfg{
-		Logger: e.Cfg.Logger,
-	}
+func (e *Example) ServiceCfg() (*service.ServiceCfg, error) {
+	cfg := service.NewServiceCfg()
+
+	cfg.Logger = e.Cfg.Logger
 
 	return cfg, nil
 }

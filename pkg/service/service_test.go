@@ -35,10 +35,10 @@ func (ts *TestService) ValidateImplementationCfg() error {
 	return nil
 }
 
-func (ts *TestService) ServiceCfg() (ServiceCfg, error) {
-	cfg := ServiceCfg{
-		Logger: ts.Cfg.Logger,
-	}
+func (ts *TestService) ServiceCfg() (*ServiceCfg, error) {
+	cfg := NewServiceCfg()
+
+	cfg.Logger = ts.Cfg.Logger
 
 	return cfg, nil
 }

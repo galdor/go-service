@@ -1,7 +1,6 @@
 package service
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"os/signal"
@@ -9,12 +8,13 @@ import (
 
 	"github.com/galdor/go-program"
 	"github.com/galdor/go-service/pkg/log"
+	"github.com/galdor/go-service/pkg/pg"
 )
 
 type ServiceImplementation interface {
 	DefaultImplementationCfg() interface{}
 	ValidateImplementationCfg() error
-	ServiceCfg() (ServiceCfg, error)
+	ServiceCfg() (*ServiceCfg, error)
 	Init(*Service) error
 	Start(*Service) error
 	Stop(*Service)
@@ -25,26 +25,48 @@ type ServiceCfg struct {
 	name string
 
 	Logger *log.LoggerCfg
+
+	PgClients map[string]pg.ClientCfg
+}
+
+func NewServiceCfg() *ServiceCfg {
+	cfg := ServiceCfg{
+		PgClients: make(map[string]pg.ClientCfg),
+	}
+
+	return &cfg
+}
+
+func (cfg *ServiceCfg) AddPgClient(name string, clientCfg pg.ClientCfg) {
+	if _, found := cfg.PgClients[name]; found {
+		panic(fmt.Sprintf("duplicate pg client %q", name))
+	}
+
+	cfg.PgClients[name] = clientCfg
 }
 
 type Service struct {
-	Cfg ServiceCfg
+	Cfg *ServiceCfg
 	Log *log.Logger
 
 	Name           string
 	Implementation ServiceImplementation
+
+	PgClients map[string]*pg.Client
 
 	stopChan        chan struct{} // used to interrupt wait()
 	errorChan       chan error    // used to signal a fatal error
 	terminationChan chan struct{} // used to wait for termination in Stop()
 }
 
-func newService(cfg ServiceCfg, implementation ServiceImplementation, ctx context.Context) *Service {
+func newService(cfg *ServiceCfg, implementation ServiceImplementation) *Service {
 	s := Service{
 		Cfg: cfg,
 
 		Name:           cfg.name,
 		Implementation: implementation,
+
+		PgClients: make(map[string]*pg.Client),
 
 		stopChan:        make(chan struct{}, 1),
 		errorChan:       make(chan error),
@@ -59,6 +81,7 @@ func (s *Service) init() error {
 
 	initFuncs := []func() error{
 		s.initLogger,
+		s.initPgClients,
 	}
 
 	for _, initFunc := range initFuncs {
@@ -85,6 +108,22 @@ func (s *Service) initLogger() error {
 	}
 
 	s.Log = logger
+
+	return nil
+}
+
+func (s *Service) initPgClients() error {
+	for name, clientCfg := range s.Cfg.PgClients {
+		logger := s.Log.Child("pg", log.Data{"client": name})
+		clientCfg.Log = logger
+
+		client, err := pg.NewClient(clientCfg)
+		if err != nil {
+			return fmt.Errorf("cannot create pg client %q: %w", name, err)
+		}
+
+		s.PgClients[name] = client
+	}
 
 	return nil
 }
@@ -116,7 +155,15 @@ func (s *Service) wait() {
 func (s *Service) stop() error {
 	s.Implementation.Stop(s)
 
+	s.stopPgClients()
+
 	return nil
+}
+
+func (s *Service) stopPgClients() {
+	for _, client := range s.PgClients {
+		client.Close()
+	}
 }
 
 func (s *Service) terminate() error {
@@ -130,10 +177,6 @@ func (s *Service) terminate() error {
 }
 
 func Run(name, description string, implementation ServiceImplementation) {
-	ctx := context.Background()
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-
 	// Program
 	p := program.NewProgram(name, description)
 
@@ -174,7 +217,7 @@ func Run(name, description string, implementation ServiceImplementation) {
 	}
 
 	// Service
-	s := newService(serviceCfg, implementation, ctx)
+	s := newService(serviceCfg, implementation)
 
 	if err := s.init(); err != nil {
 		p.Fatal("cannot initialize service: %v", err)
@@ -197,10 +240,6 @@ func RunTest(name string, implementation ServiceImplementation, cfgPath string, 
 		os.Exit(1)
 	}
 
-	ctx := context.Background()
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-
 	// Configuration
 	implementationCfg := implementation.DefaultImplementationCfg()
 
@@ -222,7 +261,7 @@ func RunTest(name string, implementation ServiceImplementation, cfgPath string, 
 	serviceCfg.name = name
 
 	// Service
-	s := newService(serviceCfg, implementation, ctx)
+	s := newService(serviceCfg, implementation)
 
 	if err := s.init(); err != nil {
 		abort("cannot initialize service: %v", err)
@@ -247,4 +286,13 @@ func (s *Service) Stop() {
 	select {
 	case <-s.terminationChan:
 	}
+}
+
+func (s *Service) PgClient(name string) *pg.Client {
+	c, found := s.PgClients[name]
+	if !found {
+		panic(fmt.Sprintf("unknown pg client %q", name))
+	}
+
+	return c
 }
