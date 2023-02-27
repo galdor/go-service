@@ -161,13 +161,15 @@ func resetTestDatabase() {
 	}
 	defer client.Close()
 
-	ctx := context.Background()
 	query := `
 DROP SCHEMA public CASCADE;
 CREATE SCHEMA public AUTHORIZATION postgres;
 GRANT ALL ON SCHEMA public TO postgres;
 `
-	if _, err := client.Pool.Exec(ctx, query); err != nil {
+	err = client.WithConn(func(conn pg.Conn) error {
+		return pg.Exec(conn, query)
+	})
+	if err != nil {
 		utils.Abort("cannot reset test database: %v", err)
 	}
 }

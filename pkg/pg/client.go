@@ -66,3 +66,54 @@ func NewClient(cfg ClientCfg) (*Client, error) {
 func (c *Client) Close() {
 	c.Pool.Close()
 }
+
+func (c *Client) WithConn(fn func(Conn) error) error {
+	ctx := context.Background()
+
+	conn, err := c.Pool.Acquire(ctx)
+	if err != nil {
+		return fmt.Errorf("cannot acquire connection: %w", err)
+	}
+	defer conn.Release()
+
+	return fn(conn)
+}
+
+func (c *Client) WithTx(fn func(Conn) error) (err error) {
+	ctx := context.Background()
+
+	conn, acquireErr := c.Pool.Acquire(ctx)
+	if acquireErr != nil {
+		err = fmt.Errorf("cannot acquire connection: %w", acquireErr)
+		return
+	}
+	defer conn.Release()
+
+	if _, beginErr := conn.Exec(ctx, "BEGIN"); beginErr != nil {
+		err = fmt.Errorf("cannot begin transaction: %w", beginErr)
+		return
+	}
+
+	defer func() {
+		if err != nil {
+			// If an error was already signaled, do not commit
+			return
+		}
+
+		if _, commitErr := conn.Exec(ctx, "COMMIT"); commitErr != nil {
+			err = fmt.Errorf("cannot commit transaction: %w", commitErr)
+		}
+	}()
+
+	if fnErr := fn(conn); fnErr != nil {
+		err = fnErr
+
+		if _, rollbackErr := conn.Exec(ctx, "ROLLBACK"); rollbackErr != nil {
+			// There is nothing we can do here, and we do want to return the
+			// function error, so we simply log the rollback error.
+			c.Log.Error("cannot rollback transaction: %v", err)
+		}
+	}
+
+	return
+}
