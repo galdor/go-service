@@ -4,11 +4,13 @@ import (
 	"github.com/galdor/go-service/pkg/log"
 	"github.com/galdor/go-service/pkg/pg"
 	"github.com/galdor/go-service/pkg/service"
+	"github.com/galdor/go-service/pkg/shttp"
 )
 
 type ExampleCfg struct {
-	Logger *log.LoggerCfg `json:"logger"`
-	Pg     pg.ClientCfg   `json:"pg"`
+	Logger        *log.LoggerCfg  `json:"logger"`
+	APIHTTPServer shttp.ServerCfg `json:"apiHTTPServer"`
+	Pg            pg.ClientCfg    `json:"pg"`
 }
 
 type Example struct {
@@ -32,6 +34,8 @@ func (e *Example) ServiceCfg() (*service.ServiceCfg, error) {
 	cfg := service.NewServiceCfg()
 
 	cfg.Logger = e.Cfg.Logger
+
+	cfg.AddHTTPServer("api", e.Cfg.APIHTTPServer)
 
 	cfg.AddPgClient("main", e.Cfg.Pg)
 

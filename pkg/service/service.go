@@ -9,6 +9,7 @@ import (
 	"github.com/galdor/go-program"
 	"github.com/galdor/go-service/pkg/log"
 	"github.com/galdor/go-service/pkg/pg"
+	"github.com/galdor/go-service/pkg/shttp"
 	"github.com/galdor/go-service/pkg/utils"
 )
 
@@ -27,15 +28,27 @@ type ServiceCfg struct {
 
 	Logger *log.LoggerCfg
 
+	HTTPServers map[string]shttp.ServerCfg
+
 	PgClients map[string]pg.ClientCfg
 }
 
 func NewServiceCfg() *ServiceCfg {
 	cfg := ServiceCfg{
+		HTTPServers: make(map[string]shttp.ServerCfg),
+
 		PgClients: make(map[string]pg.ClientCfg),
 	}
 
 	return &cfg
+}
+
+func (cfg *ServiceCfg) AddHTTPServer(name string, serverCfg shttp.ServerCfg) {
+	if _, found := cfg.HTTPServers[name]; found {
+		utils.Panicf("duplicate http server %q", name)
+	}
+
+	cfg.HTTPServers[name] = serverCfg
 }
 
 func (cfg *ServiceCfg) AddPgClient(name string, clientCfg pg.ClientCfg) {
@@ -53,6 +66,8 @@ type Service struct {
 	Name           string
 	Implementation ServiceImplementation
 
+	HTTPServers map[string]*shttp.Server
+
 	PgClients map[string]*pg.Client
 
 	stopChan        chan struct{} // used to interrupt wait()
@@ -66,6 +81,8 @@ func newService(cfg *ServiceCfg, implementation ServiceImplementation) *Service 
 
 		Name:           cfg.name,
 		Implementation: implementation,
+
+		HTTPServers: make(map[string]*shttp.Server),
 
 		PgClients: make(map[string]*pg.Client),
 
@@ -83,6 +100,7 @@ func (s *Service) init() error {
 	initFuncs := []func() error{
 		s.initLogger,
 		s.initPgClients,
+		s.initHTTPServers,
 	}
 
 	for _, initFunc := range initFuncs {
@@ -113,10 +131,25 @@ func (s *Service) initLogger() error {
 	return nil
 }
 
+func (s *Service) initHTTPServers() error {
+	for name, serverCfg := range s.Cfg.HTTPServers {
+		serverCfg.Log = s.Log.Child("http-server", log.Data{"server": name})
+		serverCfg.ErrorChan = s.errorChan
+
+		server, err := shttp.NewServer(serverCfg)
+		if err != nil {
+			return fmt.Errorf("cannot create http server %q: %w", name, err)
+		}
+
+		s.HTTPServers[name] = server
+	}
+
+	return nil
+}
+
 func (s *Service) initPgClients() error {
 	for name, clientCfg := range s.Cfg.PgClients {
-		logger := s.Log.Child("pg", log.Data{"client": name})
-		clientCfg.Log = logger
+		clientCfg.Log = s.Log.Child("pg", log.Data{"client": name})
 
 		client, err := pg.NewClient(clientCfg)
 		if err != nil {
@@ -130,8 +163,24 @@ func (s *Service) initPgClients() error {
 }
 
 func (s *Service) start() error {
+	if err := s.startHTTPServers(); err != nil {
+		return err
+	}
+
 	if err := s.Implementation.Start(s); err != nil {
 		return err
+	}
+
+	s.Log.Info("started")
+
+	return nil
+}
+
+func (s *Service) startHTTPServers() error {
+	for name, s := range s.HTTPServers {
+		if err := s.Start(); err != nil {
+			return fmt.Errorf("cannot start http server %q: %w", name, err)
+		}
 	}
 
 	return nil
@@ -157,9 +206,17 @@ func (s *Service) wait() {
 }
 
 func (s *Service) stop() error {
+	s.Log.Info("stopping")
+
 	s.Implementation.Stop(s)
 
+	for _, s := range s.HTTPServers {
+		s.Stop()
+	}
+
 	s.stopPgClients()
+
+	s.Log.Info("stopped")
 
 	return nil
 }
