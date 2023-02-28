@@ -12,7 +12,7 @@ type ClientCfg struct {
 	Log *log.Logger `json:"-"`
 
 	URI             string `json:"uri"`
-	ApplicationName string `json:"application_name,omitempty"`
+	ApplicationName string `json:"applicationName,omitempty"`
 }
 
 type Client struct {
