@@ -60,6 +60,9 @@ func NewServer(cfg ServerCfg) (*Server, error) {
 		Addr:     cfg.Address,
 		Handler:  s,
 		ErrorLog: s.Log.StdLogger(log.LevelError),
+
+		ReadHeaderTimeout: 5 * time.Second,
+		IdleTimeout:       10 * time.Second,
 	}
 
 	if cfg.TLS != nil {
