@@ -3,6 +3,7 @@ package pg
 import (
 	"context"
 	"fmt"
+	"path"
 
 	"github.com/galdor/go-service/pkg/log"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -13,6 +14,9 @@ type ClientCfg struct {
 
 	URI             string `json:"uri"`
 	ApplicationName string `json:"applicationName,omitempty"`
+
+	SchemaDirectory string   `json:"schemaDirectory"`
+	SchemaNames     []string `jsoN:"schemaNames"`
 }
 
 type Client struct {
@@ -60,7 +64,26 @@ func NewClient(cfg ClientCfg) (*Client, error) {
 		Pool: pool,
 	}
 
+	if c.Cfg.SchemaDirectory != "" {
+		if err := c.updateSchemas(); err != nil {
+			c.Close()
+			return nil, err
+		}
+	}
+
 	return &c, nil
+}
+
+func (c *Client) updateSchemas() error {
+	for _, name := range c.Cfg.SchemaNames {
+		dirPath := path.Join(c.Cfg.SchemaDirectory, name)
+
+		if err := c.UpdateSchema(name, dirPath); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (c *Client) Close() {
@@ -116,4 +139,8 @@ func (c *Client) WithTx(fn func(Conn) error) (err error) {
 	}
 
 	return
+}
+
+func TakeAdvisoryTxLock(conn Conn, id1, id2 uint32) error {
+	return Exec(conn, `SELECT pg_advisory_xact_lock($1, $2)`, id1, id2)
 }

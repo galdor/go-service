@@ -121,7 +121,7 @@ func setTestDirectory() {
 	// project by looking for the configuration file, and change the current
 	// directory.
 
-	cfgFileName := "cfg/test.yaml"
+	cfgFileName := "test/test.yaml"
 
 	_, filePath, _, _ := runtime.Caller(0)
 
@@ -180,7 +180,7 @@ func TestServiceLifecycle(t *testing.T) {
 	ts := NewTestService(t)
 
 	go func() {
-		RunTest("test-service", ts, "cfg/test.yaml", readyChan)
+		RunTest("test-service", ts, "test/test.yaml", readyChan)
 	}()
 
 	select {
