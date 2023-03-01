@@ -4,7 +4,9 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/galdor/go-service/pkg/log"
 	"github.com/galdor/go-service/pkg/utils"
@@ -18,6 +20,8 @@ type Handler struct {
 	ResponseWriter http.ResponseWriter
 
 	Query url.Values
+
+	start time.Time
 
 	pathVariables map[string]string
 }
@@ -66,4 +70,27 @@ func (h *Handler) ReplyText(status int, body string) {
 	header.Set("Content-Type", "text/plain; charset=UTF-8")
 
 	h.Reply(status, strings.NewReader(body))
+}
+
+func (h *Handler) logRequest() {
+	req := h.Request
+	w := h.ResponseWriter.(*ResponseWriter)
+
+	reqTime := time.Since(h.start)
+
+	data := log.Data{
+		"time":         reqTime.Microseconds(),
+		"responseSize": w.ResponseBodySize,
+	}
+
+	statusString := "-"
+	if w.Status != 0 {
+		statusString = strconv.Itoa(w.Status)
+		data["status"] = w.Status
+	}
+
+	h.Log.InfoData(data, "%s %s %s %s %s",
+		req.Method, req.URL.Path, statusString,
+		utils.FormatDataSize(w.ResponseBodySize, 1),
+		utils.FormatSeconds(reqTime.Seconds(), 1))
 }

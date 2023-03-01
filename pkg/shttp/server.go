@@ -146,15 +146,16 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		Server: s,
 		Log:    s.Log.Child("", nil),
 
-		Request:        req,
-		ResponseWriter: w,
+		ResponseWriter: NewResponseWriter(w),
 	}
 
 	ctx := req.Context()
 	ctx = context.WithValue(ctx, contextKeyHandler, &h)
 	h.Request = req.WithContext(ctx)
 
-	h.ResponseWriter = w
+	h.start = time.Now()
+
+	defer h.logRequest()
 
 	s.router.ServeHTTP(h.ResponseWriter, h.Request)
 }
