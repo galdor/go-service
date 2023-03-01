@@ -344,6 +344,15 @@ func (s *Service) Stop() {
 	}
 }
 
+func (s *Service) HTTPServer(name string) *shttp.Server {
+	server, found := s.HTTPServers[name]
+	if !found {
+		utils.Panicf("unknown http server %q", name)
+	}
+
+	return server
+}
+
 func (s *Service) PgClient(name string) *pg.Client {
 	c, found := s.PgClients[name]
 	if !found {

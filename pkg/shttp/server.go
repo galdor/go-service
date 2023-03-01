@@ -10,7 +10,16 @@ import (
 	"time"
 
 	"github.com/galdor/go-service/pkg/log"
+	"github.com/julienschmidt/httprouter"
 )
+
+type contextKey struct{}
+
+var (
+	contextKeyHandler contextKey = struct{}{}
+)
+
+type RouteFunc func(*Handler)
 
 type ServerCfg struct {
 	Log       *log.Logger  `json:"-"`
@@ -31,6 +40,7 @@ type Server struct {
 	Log *log.Logger
 
 	server *http.Server
+	router *httprouter.Router
 
 	errorChan chan<- error
 	wg        sync.WaitGroup
@@ -71,6 +81,13 @@ func NewServer(cfg ServerCfg) (*Server, error) {
 			PreferServerCipherSuites: true,
 		}
 	}
+
+	s.router = httprouter.New()
+
+	s.router.HandleMethodNotAllowed = true
+	s.router.HandleOPTIONS = true
+	s.router.RedirectFixedPath = true
+	s.router.RedirectTrailingSlash = true
 
 	return s, nil
 }
@@ -125,7 +142,39 @@ func (s *Server) shutdown() {
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	// TODO
-	w.WriteHeader(501)
-	fmt.Fprintf(w, "request handling not implemented yet")
+	h := Handler{
+		Server: s,
+		Log:    s.Log.Child("", nil),
+
+		Request:        req,
+		ResponseWriter: w,
+	}
+
+	ctx := req.Context()
+	ctx = context.WithValue(ctx, contextKeyHandler, &h)
+	h.Request = req.WithContext(ctx)
+
+	h.ResponseWriter = w
+
+	s.router.ServeHTTP(h.ResponseWriter, h.Request)
+}
+
+func (s *Server) Route(pathPattern, method string, routeFunc RouteFunc) {
+	handlerFunc := func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
+		h := requestHandler(req)
+		h.Request = req // the request may have been modified by the router
+
+		routeFunc(h)
+	}
+
+	s.router.Handle(method, pathPattern, handlerFunc)
+}
+
+func requestHandler(req *http.Request) *Handler {
+	value := req.Context().Value(contextKeyHandler)
+	if value == nil {
+		return nil
+	}
+
+	return value.(*Handler)
 }

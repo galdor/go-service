@@ -14,8 +14,9 @@ type ExampleCfg struct {
 }
 
 type Example struct {
-	Cfg ExampleCfg
-	Log *log.Logger
+	Cfg     ExampleCfg
+	Service *service.Service
+	Log     *log.Logger
 }
 
 func NewExample() *Example {
@@ -43,8 +44,18 @@ func (e *Example) ServiceCfg() (*service.ServiceCfg, error) {
 }
 
 func (e *Example) Init(s *service.Service) error {
+	e.Service = s
 	e.Log = s.Log
+
+	e.initAPIHTTPRoutes()
+
 	return nil
+}
+
+func (e *Example) initAPIHTTPRoutes() {
+	s := e.Service.HTTPServer("api")
+
+	s.Route("/hello", "GET", e.hAPIHelloGET)
 }
 
 func (e *Example) Start(s *service.Service) error {
@@ -55,6 +66,10 @@ func (e *Example) Stop(s *service.Service) {
 }
 
 func (e *Example) Terminate(s *service.Service) {
+}
+
+func (e *Example) hAPIHelloGET(h *shttp.Handler) {
+	h.ReplyText(200, "Hello world!")
 }
 
 func main() {
