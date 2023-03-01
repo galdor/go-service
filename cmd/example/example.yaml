@@ -1,5 +1,4 @@
 logger:
-
   backendType: "terminal"
   backend:
     color: true
@@ -10,3 +9,4 @@ pg:
 
 apiHTTPServer:
   address: "localhost:8081"
+  logSuccessfulRequests: true

@@ -28,6 +28,8 @@ type ServerCfg struct {
 	Address string `json:"address"`
 
 	TLS *TLSServerCfg `json:"tls,omitempty"`
+
+	LogSuccessfulRequests bool `json:"logSuccessfulRequests,omitempty"`
 }
 
 type TLSServerCfg struct {
