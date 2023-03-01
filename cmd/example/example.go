@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/galdor/go-service/pkg/log"
 	"github.com/galdor/go-service/pkg/pg"
 	"github.com/galdor/go-service/pkg/service"
@@ -55,7 +57,7 @@ func (e *Example) Init(s *service.Service) error {
 func (e *Example) initAPIHTTPRoutes() {
 	s := e.Service.HTTPServer("api")
 
-	s.Route("/hello", "GET", e.hAPIHelloGET)
+	s.Route("/hello/:name", "GET", e.hAPIHelloGET)
 }
 
 func (e *Example) Start(s *service.Service) error {
@@ -69,7 +71,8 @@ func (e *Example) Terminate(s *service.Service) {
 }
 
 func (e *Example) hAPIHelloGET(h *shttp.Handler) {
-	h.ReplyText(200, "Hello world!")
+	name := h.PathVariable("name")
+	h.ReplyText(200, fmt.Sprintf("Hello %s!\n", name))
 }
 
 func main() {

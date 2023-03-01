@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/galdor/go-service/pkg/log"
+	"github.com/galdor/go-service/pkg/utils"
 )
 
 type Handler struct {
@@ -14,6 +15,17 @@ type Handler struct {
 
 	Request        *http.Request
 	ResponseWriter http.ResponseWriter
+
+	pathVariables map[string]string
+}
+
+func (h *Handler) PathVariable(name string) string {
+	value, found := h.pathVariables[name]
+	if !found {
+		utils.Panicf("unknown path variable %q", name)
+	}
+
+	return value
 }
 
 func (h *Handler) Reply(status int, r io.Reader) {
