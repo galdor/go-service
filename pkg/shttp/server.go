@@ -164,6 +164,8 @@ func (s *Server) Route(pathPattern, method string, routeFunc RouteFunc) {
 		h := requestHandler(req)
 		h.Request = req // the request may have been modified by the router
 
+		h.Query = req.URL.Query()
+
 		h.pathVariables = make(map[string]string)
 		for _, p := range params {
 			h.pathVariables[p.Key] = p.Value

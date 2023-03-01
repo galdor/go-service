@@ -3,6 +3,7 @@ package shttp
 import (
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/galdor/go-service/pkg/log"
@@ -16,6 +17,8 @@ type Handler struct {
 	Request        *http.Request
 	ResponseWriter http.ResponseWriter
 
+	Query url.Values
+
 	pathVariables map[string]string
 }
 
@@ -26,6 +29,14 @@ func (h *Handler) PathVariable(name string) string {
 	}
 
 	return value
+}
+
+func (h *Handler) HasQueryParameter(name string) bool {
+	return h.Query.Has(name)
+}
+
+func (h *Handler) QueryParameter(name string) string {
+	return h.Query.Get(name)
 }
 
 func (h *Handler) Reply(status int, r io.Reader) {

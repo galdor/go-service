@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
+	"strconv"
 
 	"github.com/galdor/go-service/pkg/log"
 	"github.com/galdor/go-service/pkg/pg"
@@ -71,8 +73,27 @@ func (e *Example) Terminate(s *service.Service) {
 }
 
 func (e *Example) hAPIHelloGET(h *shttp.Handler) {
+	n := 1
+
+	if h.HasQueryParameter("n") {
+		i64, err := strconv.ParseInt(h.QueryParameter("n"), 10, 64)
+		if err != nil || i64 < 1 || i64 > 10 {
+			msg := fmt.Sprintf("invalid value for query parameter %q\n", "n")
+			h.ReplyText(400, msg)
+			return
+		}
+
+		n = int(i64)
+	}
+
 	name := h.PathVariable("name")
-	h.ReplyText(200, fmt.Sprintf("Hello %s!\n", name))
+
+	var response bytes.Buffer
+	for i := 0; i < n; i++ {
+		fmt.Fprintf(&response, "Hello %s!\n", name)
+	}
+
+	h.ReplyText(200, response.String())
 }
 
 func main() {
