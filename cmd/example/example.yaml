@@ -3,6 +3,10 @@ logger:
   backend:
     color: true
 
+influx:
+  uri: "http://localhost:8086"
+  bucket: "service/main"
+
 pg:
   uri: "postgres://postgres:postgres@localhost:5432/service"
   applicationName: "service"

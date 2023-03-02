@@ -7,6 +7,7 @@ import (
 	"syscall"
 
 	"github.com/galdor/go-program"
+	"github.com/galdor/go-service/pkg/influx"
 	"github.com/galdor/go-service/pkg/log"
 	"github.com/galdor/go-service/pkg/pg"
 	"github.com/galdor/go-service/pkg/shttp"
@@ -30,6 +31,8 @@ type ServiceCfg struct {
 
 	HTTPClients map[string]shttp.ClientCfg
 	HTTPServers map[string]shttp.ServerCfg
+
+	Influx *influx.ClientCfg
 
 	PgClients map[string]pg.ClientCfg
 }
@@ -76,8 +79,12 @@ type Service struct {
 	Name           string
 	Implementation ServiceImplementation
 
+	Hostname string
+
 	HTTPClients map[string]*shttp.Client
 	HTTPServers map[string]*shttp.Server
+
+	Influx *influx.Client
 
 	PgClients map[string]*pg.Client
 
@@ -110,10 +117,12 @@ func (s *Service) init() error {
 	s.Log = log.DefaultLogger(s.Name)
 
 	initFuncs := []func() error{
+		s.initHostname,
 		s.initLogger,
 		s.initPgClients,
 		s.initHTTPServers,
 		s.initHTTPClients,
+		s.initInflux,
 	}
 
 	for _, initFunc := range initFuncs {
@@ -125,6 +134,17 @@ func (s *Service) init() error {
 	if err := s.Implementation.Init(s); err != nil {
 		return err
 	}
+
+	return nil
+}
+
+func (s *Service) initHostname() error {
+	hostname, err := os.Hostname()
+	if err != nil {
+		return fmt.Errorf("cannot obtain hostname: %w", err)
+	}
+
+	s.Hostname = hostname
 
 	return nil
 }
@@ -161,7 +181,16 @@ func (s *Service) initHTTPServers() error {
 }
 
 func (s *Service) initHTTPClients() error {
+	clientCfgs := make(map[string]shttp.ClientCfg)
 	for name, clientCfg := range s.Cfg.HTTPClients {
+		clientCfgs[name] = clientCfg
+	}
+
+	if s.Cfg.Influx != nil {
+		clientCfgs["influx"] = influx.HTTPClientCfg(s.Cfg.Influx)
+	}
+
+	for name, clientCfg := range clientCfgs {
 		clientCfg.Log = s.Log.Child("http-client", log.Data{"client": name})
 
 		client, err := shttp.NewClient(clientCfg)
@@ -171,6 +200,27 @@ func (s *Service) initHTTPClients() error {
 
 		s.HTTPClients[name] = client
 	}
+
+	return nil
+}
+
+func (s *Service) initInflux() error {
+	if s.Cfg.Influx == nil {
+		return nil
+	}
+
+	cfg := *s.Cfg.Influx
+
+	cfg.Log = s.Log.Child("influx", log.Data{})
+	cfg.HTTPClient = s.HTTPClient("influx")
+	cfg.Hostname = s.Hostname
+
+	client, err := influx.NewClient(cfg)
+	if err != nil {
+		return fmt.Errorf("cannot create influx client: %w", err)
+	}
+
+	s.Influx = client
 
 	return nil
 }
@@ -191,6 +241,10 @@ func (s *Service) initPgClients() error {
 }
 
 func (s *Service) start() error {
+	if s.Influx != nil {
+		s.Influx.Start()
+	}
+
 	if err := s.startHTTPServers(); err != nil {
 		return err
 	}
@@ -242,6 +296,10 @@ func (s *Service) stop() error {
 	s.stopHTTPServers()
 	s.stopPgClients()
 
+	if s.Influx != nil {
+		s.Influx.Stop()
+	}
+
 	s.Log.Info("stopped")
 
 	return nil
@@ -267,6 +325,10 @@ func (s *Service) stopHTTPClients() {
 
 func (s *Service) terminate() error {
 	s.Implementation.Terminate(s)
+
+	if s.Influx != nil {
+		s.Influx.Terminate()
+	}
 
 	close(s.stopChan)
 	close(s.errorChan)

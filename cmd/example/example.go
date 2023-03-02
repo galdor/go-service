@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/galdor/go-service/pkg/influx"
 	"github.com/galdor/go-service/pkg/log"
 	"github.com/galdor/go-service/pkg/pg"
 	"github.com/galdor/go-service/pkg/service"
@@ -12,9 +13,10 @@ import (
 )
 
 type ExampleCfg struct {
-	Logger        *log.LoggerCfg  `json:"logger"`
-	APIHTTPServer shttp.ServerCfg `json:"apiHTTPServer"`
-	Pg            pg.ClientCfg    `json:"pg"`
+	Logger        *log.LoggerCfg    `json:"logger"`
+	Influx        *influx.ClientCfg `json:"influx"`
+	APIHTTPServer shttp.ServerCfg   `json:"apiHTTPServer"`
+	Pg            pg.ClientCfg      `json:"pg"`
 }
 
 type Example struct {
@@ -39,6 +41,7 @@ func (e *Example) ServiceCfg() (*service.ServiceCfg, error) {
 	cfg := service.NewServiceCfg()
 
 	cfg.Logger = e.Cfg.Logger
+	cfg.Influx = e.Cfg.Influx
 
 	cfg.AddHTTPServer("api", e.Cfg.APIHTTPServer)
 
