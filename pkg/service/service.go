@@ -28,6 +28,7 @@ type ServiceCfg struct {
 
 	Logger *log.LoggerCfg
 
+	HTTPClients map[string]shttp.ClientCfg
 	HTTPServers map[string]shttp.ServerCfg
 
 	PgClients map[string]pg.ClientCfg
@@ -35,12 +36,21 @@ type ServiceCfg struct {
 
 func NewServiceCfg() *ServiceCfg {
 	cfg := ServiceCfg{
+		HTTPClients: make(map[string]shttp.ClientCfg),
 		HTTPServers: make(map[string]shttp.ServerCfg),
 
 		PgClients: make(map[string]pg.ClientCfg),
 	}
 
 	return &cfg
+}
+
+func (cfg *ServiceCfg) AddHTTPClient(name string, clientCfg shttp.ClientCfg) {
+	if _, found := cfg.HTTPClients[name]; found {
+		utils.Panicf("duplicate http client %q", name)
+	}
+
+	cfg.HTTPClients[name] = clientCfg
 }
 
 func (cfg *ServiceCfg) AddHTTPServer(name string, serverCfg shttp.ServerCfg) {
@@ -66,6 +76,7 @@ type Service struct {
 	Name           string
 	Implementation ServiceImplementation
 
+	HTTPClients map[string]*shttp.Client
 	HTTPServers map[string]*shttp.Server
 
 	PgClients map[string]*pg.Client
@@ -82,6 +93,7 @@ func newService(cfg *ServiceCfg, implementation ServiceImplementation) *Service 
 		Name:           cfg.name,
 		Implementation: implementation,
 
+		HTTPClients: make(map[string]*shttp.Client),
 		HTTPServers: make(map[string]*shttp.Server),
 
 		PgClients: make(map[string]*pg.Client),
@@ -101,6 +113,7 @@ func (s *Service) init() error {
 		s.initLogger,
 		s.initPgClients,
 		s.initHTTPServers,
+		s.initHTTPClients,
 	}
 
 	for _, initFunc := range initFuncs {
@@ -142,6 +155,21 @@ func (s *Service) initHTTPServers() error {
 		}
 
 		s.HTTPServers[name] = server
+	}
+
+	return nil
+}
+
+func (s *Service) initHTTPClients() error {
+	for name, clientCfg := range s.Cfg.HTTPClients {
+		clientCfg.Log = s.Log.Child("http-client", log.Data{"client": name})
+
+		client, err := shttp.NewClient(clientCfg)
+		if err != nil {
+			return fmt.Errorf("cannot create http client %q: %w", name, err)
+		}
+
+		s.HTTPClients[name] = client
 	}
 
 	return nil
@@ -210,10 +238,8 @@ func (s *Service) stop() error {
 
 	s.Implementation.Stop(s)
 
-	for _, s := range s.HTTPServers {
-		s.Stop()
-	}
-
+	s.stopHTTPClients()
+	s.stopHTTPServers()
 	s.stopPgClients()
 
 	s.Log.Info("stopped")
@@ -221,9 +247,21 @@ func (s *Service) stop() error {
 	return nil
 }
 
+func (s *Service) stopHTTPServers() {
+	for _, server := range s.HTTPServers {
+		server.Stop()
+	}
+}
+
 func (s *Service) stopPgClients() {
 	for _, client := range s.PgClients {
 		client.Close()
+	}
+}
+
+func (s *Service) stopHTTPClients() {
+	for _, client := range s.HTTPClients {
+		client.CloseConnections()
 	}
 }
 
@@ -344,6 +382,15 @@ func (s *Service) Stop() {
 	}
 }
 
+func (s *Service) HTTPClient(name string) *shttp.Client {
+	client, found := s.HTTPClients[name]
+	if !found {
+		utils.Panicf("unknown http client %q", name)
+	}
+
+	return client
+}
+
 func (s *Service) HTTPServer(name string) *shttp.Server {
 	server, found := s.HTTPServers[name]
 	if !found {
@@ -354,10 +401,10 @@ func (s *Service) HTTPServer(name string) *shttp.Server {
 }
 
 func (s *Service) PgClient(name string) *pg.Client {
-	c, found := s.PgClients[name]
+	client, found := s.PgClients[name]
 	if !found {
 		utils.Panicf("unknown pg client %q", name)
 	}
 
-	return c
+	return client
 }
