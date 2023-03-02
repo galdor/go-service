@@ -95,8 +95,7 @@ func (h *Handler) logRequest() {
 		data["status"] = w.Status
 	}
 
-	h.Log.InfoData(data, "%s %s %s %s %s",
+	h.Log.InfoData(data, "%s %s %s %s",
 		req.Method, req.URL.Path, statusString,
-		utils.FormatDataSize(w.ResponseBodySize, 1),
 		utils.FormatSeconds(reqTime.Seconds(), 1))
 }
