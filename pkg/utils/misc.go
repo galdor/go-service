@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"runtime"
@@ -15,7 +16,7 @@ func Panicf(format string, args ...interface{}) {
 	panic(fmt.Sprintf(format, args...))
 }
 
-func RecoverValueData(value interface{}) (msg, trace string) {
+func RecoverValueString(value interface{}) (msg string) {
 	switch v := value.(type) {
 	case error:
 		msg = v.Error()
@@ -25,10 +26,35 @@ func RecoverValueData(value interface{}) (msg, trace string) {
 		msg = fmt.Sprintf("%#v", v)
 	}
 
-	buf := make([]byte, 4096)
-	n := runtime.Stack(buf, false)
-	buf = buf[0 : n-1]
-	trace = string(buf)
-
 	return
+}
+
+func StackTrace(skip, depth int, includeLocation bool) string {
+	pc := make([]uintptr, depth)
+
+	// Always skip runtime.Callers and utils.Stacktrace
+	nbFrames := runtime.Callers(skip+2, pc)
+	pc = pc[:nbFrames]
+
+	var buf bytes.Buffer
+
+	frames := runtime.CallersFrames(pc)
+	for {
+		frame, more := frames.Next()
+
+		filePath := frame.File
+		line := frame.Line
+		function := frame.Function
+
+		fmt.Fprintf(&buf, "%s\n", function)
+		if includeLocation {
+			fmt.Fprintf(&buf, "  %s:%d\n", filePath, line)
+		}
+
+		if !more {
+			break
+		}
+	}
+
+	return buf.String()
 }

@@ -98,7 +98,7 @@ func (h *Handler) ReplyErrorData(status int, code string, data ErrorData, format
 }
 
 func (h *Handler) ReplyInternalError(status int, format string, args ...interface{}) {
-	msg := fmt.Sprintf(format, args...)
+	msg := strings.TrimRight(fmt.Sprintf(format, args...), "\n")
 	h.Log.Error("internal error: %s", msg)
 
 	if h.Server.Cfg.HideInternalErrors {

@@ -203,7 +203,8 @@ func (s *Server) handlePanic(w http.ResponseWriter, req *http.Request, data inte
 	h := requestHandler(req)
 	s.finalizeHandler(h, req, "", req.Method, nil, nil)
 
-	msg, trace := utils.RecoverValueData(data)
+	msg := utils.RecoverValueString(data)
+	trace := utils.StackTrace(0, 20, true)
 
 	h.ReplyInternalError(500, "panic: "+msg+"\n\n"+trace)
 }
