@@ -35,6 +35,10 @@ type Handler struct {
 }
 
 func RouteId(method, pathPattern string) string {
+	if method == "" || pathPattern == "" {
+		return ""
+	}
+
 	return pathPattern + " " + method
 }
 
@@ -161,13 +165,20 @@ func (h *Handler) sendInfluxPoints() {
 
 	tags := influx.Tags{
 		"server": h.Server.Cfg.Name,
-		"route":  h.RouteId,
+	}
+
+	if h.RouteId != "" {
+		tags["route"] = h.RouteId
 	}
 
 	fields := influx.Fields{
 		"time":         reqTime.Microseconds(),
 		"status":       w.Status,
 		"responseSize": w.ResponseBodySize,
+	}
+
+	if w.Status != 0 {
+		fields["status"] = w.Status
 	}
 
 	point := influx.NewPointWithTimestamp("incomingHTTPRequests",

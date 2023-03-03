@@ -103,6 +103,8 @@ func NewServer(cfg ServerCfg) (*Server, error) {
 
 	s.router = httprouter.New()
 
+	s.router.NotFound = &NotFoundHandler{Server: s}
+	s.router.MethodNotAllowed = &MethodNotAllowedHandler{Server: s}
 	s.router.HandleMethodNotAllowed = true
 	s.router.HandleOPTIONS = true
 	s.router.RedirectFixedPath = true
@@ -187,25 +189,55 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 func (s *Server) Route(pathPattern, method string, routeFunc RouteFunc) {
 	handlerFunc := func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
 		h := requestHandler(req)
-		h.Request = req // the request may have been modified by the router
-		h.Query = req.URL.Query()
-
-		h.Method = method
-		h.PathPattern = pathPattern
-		h.RouteId = RouteId(method, pathPattern)
-
-		h.ClientAddress = requestClientAddress(req)
-		h.RequestId = requestId(req)
-
-		h.pathVariables = make(map[string]string)
-		for _, p := range params {
-			h.pathVariables[p.Key] = p.Value
-		}
+		s.finalizeHandler(h, req, pathPattern, method, routeFunc, params)
 
 		routeFunc(h)
 	}
 
 	s.router.Handle(method, pathPattern, handlerFunc)
+}
+
+func (s *Server) finalizeHandler(h *Handler, req *http.Request, pathPattern, method string, routeFunc RouteFunc, params httprouter.Params) {
+	h.Request = req // the request may have been modified by the router
+	h.Query = req.URL.Query()
+
+	h.Method = method
+	h.PathPattern = pathPattern
+	h.RouteId = RouteId(method, pathPattern)
+
+	h.ClientAddress = requestClientAddress(req)
+	h.RequestId = requestId(req)
+
+	h.pathVariables = make(map[string]string)
+	for _, p := range params {
+		h.pathVariables[p.Key] = p.Value
+	}
+}
+
+func DefaultErrorHandler(h *Handler, status int, code string, msg string, data ErrorData) {
+	h.ReplyText(status, code+": "+msg+"\n")
+}
+
+type NotFoundHandler struct {
+	Server *Server
+}
+
+func (s *NotFoundHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	h := requestHandler(req)
+	s.Server.finalizeHandler(h, req, "", req.Method, nil, nil)
+
+	h.ReplyError(404, "not_found", "http route not found")
+}
+
+type MethodNotAllowedHandler struct {
+	Server *Server
+}
+
+func (s *MethodNotAllowedHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	h := requestHandler(req)
+	s.Server.finalizeHandler(h, req, "", req.Method, nil, nil)
+
+	h.ReplyError(405, "method_not_allowed", "http method not allowed")
 }
 
 func requestHandler(req *http.Request) *Handler {
@@ -239,8 +271,4 @@ func requestClientAddress(req *http.Request) string {
 
 func requestId(req *http.Request) string {
 	return req.Header.Get("X-Request-Id")
-}
-
-func DefaultErrorHandler(h *Handler, status int, code string, msg string, data ErrorData) {
-	h.ReplyText(status, code+": "+msg+"\n")
 }
