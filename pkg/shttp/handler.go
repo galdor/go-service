@@ -25,6 +25,9 @@ type Handler struct {
 	Query          url.Values
 	ResponseWriter http.ResponseWriter
 
+	ClientAddress string // optional
+	RequestId     string // optional
+
 	start         time.Time
 	pathVariables map[string]string
 }
@@ -92,8 +95,17 @@ func (h *Handler) logRequest() {
 	reqTime := time.Since(h.start)
 
 	data := log.Data{
+		"event":        "http.incomingRequest",
 		"time":         reqTime.Microseconds(),
 		"responseSize": w.ResponseBodySize,
+	}
+
+	if h.ClientAddress != "" {
+		data["address"] = h.ClientAddress
+	}
+
+	if h.RequestId != "" {
+		data["requestId"] = h.RequestId
 	}
 
 	statusString := "-"

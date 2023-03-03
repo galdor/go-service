@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -180,6 +181,9 @@ func (s *Server) Route(pathPattern, method string, routeFunc RouteFunc) {
 		h.PathPattern = pathPattern
 		h.RouteId = RouteId(method, pathPattern)
 
+		h.ClientAddress = requestClientAddress(req)
+		h.RequestId = requestId(req)
+
 		h.pathVariables = make(map[string]string)
 		for _, p := range params {
 			h.pathVariables[p.Key] = p.Value
@@ -198,4 +202,28 @@ func requestHandler(req *http.Request) *Handler {
 	}
 
 	return value.(*Handler)
+}
+
+func requestClientAddress(req *http.Request) string {
+	if v := req.Header.Get("X-Real-IP"); v != "" {
+		return v
+	} else if v := req.Header.Get("X-Forwarded-For"); v != "" {
+		i := strings.Index(v, ", ")
+		if i == -1 {
+			return v
+		}
+
+		return v[:i]
+	} else {
+		host, _, err := net.SplitHostPort(req.RemoteAddr)
+		if err != nil {
+			return ""
+		}
+
+		return host
+	}
+}
+
+func requestId(req *http.Request) string {
+	return req.Header.Get("X-Request-Id")
 }
