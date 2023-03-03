@@ -65,6 +65,7 @@ func (e *Example) initAPIHTTPRoutes() {
 	s.Route("/ping", "GET", e.hAPIPingGET)
 	s.Route("/hello/:name", "GET", e.hAPIHelloNameGET)
 	s.Route("/error/internal", "GET", e.hErrorInternalGET)
+	s.Route("/error/panic", "GET", e.hErrorPanicGET)
 }
 
 func (e *Example) Start(s *service.Service) error {
@@ -106,7 +107,11 @@ func (e *Example) hAPIHelloNameGET(h *shttp.Handler) {
 }
 
 func (e *Example) hErrorInternalGET(h *shttp.Handler) {
-	h.ReplyInternalError(500, "example of an internal error")
+	h.ReplyInternalError(500, "test error")
+}
+
+func (e *Example) hErrorPanicGET(h *shttp.Handler) {
+	panic("test error")
 }
 
 func main() {

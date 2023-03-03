@@ -12,6 +12,7 @@ import (
 
 	"github.com/galdor/go-service/pkg/influx"
 	"github.com/galdor/go-service/pkg/log"
+	"github.com/galdor/go-service/pkg/utils"
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -107,6 +108,7 @@ func NewServer(cfg ServerCfg) (*Server, error) {
 	s.router.MethodNotAllowed = &MethodNotAllowedHandler{Server: s}
 	s.router.HandleMethodNotAllowed = true
 	s.router.HandleOPTIONS = true
+	s.router.PanicHandler = s.handlePanic
 	s.router.RedirectFixedPath = true
 	s.router.RedirectTrailingSlash = true
 
@@ -195,6 +197,15 @@ func (s *Server) Route(pathPattern, method string, routeFunc RouteFunc) {
 	}
 
 	s.router.Handle(method, pathPattern, handlerFunc)
+}
+
+func (s *Server) handlePanic(w http.ResponseWriter, req *http.Request, data interface{}) {
+	h := requestHandler(req)
+	s.finalizeHandler(h, req, "", req.Method, nil, nil)
+
+	msg, trace := utils.RecoverValueData(data)
+
+	h.ReplyInternalError(500, "panic: "+msg+"\n\n"+trace)
 }
 
 func (s *Server) finalizeHandler(h *Handler, req *http.Request, pathPattern, method string, routeFunc RouteFunc, params httprouter.Params) {
