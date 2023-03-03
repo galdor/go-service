@@ -23,17 +23,22 @@ var (
 
 type RouteFunc func(*Handler)
 
+type ErrorData map[string]interface{}
+type ErrorHandler func(*Handler, int, string, string, ErrorData)
+
 type ServerCfg struct {
 	Log          *log.Logger    `json:"-"`
 	ErrorChan    chan<- error   `json:"-"`
 	InfluxClient *influx.Client `json:"-"`
 	Name         string         `json:"-"`
+	ErrorHandler ErrorHandler   `json:"-"`
 
 	Address string `json:"address"`
 
-	TLS *TLSServerCfg `json:"tls,omitempty"`
+	TLS *TLSServerCfg `json:"tls"`
 
-	LogSuccessfulRequests bool `json:"logSuccessfulRequests,omitempty"`
+	LogSuccessfulRequests bool `json:"logSuccessfulRequests"`
+	HideInternalErrors    bool `json:"hideInternalErrors"`
 }
 
 type TLSServerCfg struct {
@@ -47,6 +52,8 @@ type Server struct {
 
 	server *http.Server
 	router *httprouter.Router
+
+	errorHandler ErrorHandler
 
 	errorChan chan<- error
 	wg        sync.WaitGroup
@@ -73,6 +80,8 @@ func NewServer(cfg ServerCfg) (*Server, error) {
 		Cfg: cfg,
 		Log: cfg.Log,
 
+		errorHandler: DefaultErrorHandler,
+
 		errorChan: cfg.ErrorChan,
 	}
 
@@ -98,6 +107,10 @@ func NewServer(cfg ServerCfg) (*Server, error) {
 	s.router.HandleOPTIONS = true
 	s.router.RedirectFixedPath = true
 	s.router.RedirectTrailingSlash = true
+
+	if cfg.ErrorHandler != nil {
+		s.errorHandler = cfg.ErrorHandler
+	}
 
 	return s, nil
 }
@@ -226,4 +239,8 @@ func requestClientAddress(req *http.Request) string {
 
 func requestId(req *http.Request) string {
 	return req.Header.Get("X-Request-Id")
+}
+
+func DefaultErrorHandler(h *Handler, status int, code string, msg string, data ErrorData) {
+	h.ReplyText(status, code+": "+msg+"\n")
 }

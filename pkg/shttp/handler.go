@@ -1,6 +1,7 @@
 package shttp
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -30,6 +31,7 @@ type Handler struct {
 
 	start         time.Time
 	pathVariables map[string]string
+	errorCode     string
 }
 
 func RouteId(method, pathPattern string) string {
@@ -82,6 +84,30 @@ func (h *Handler) ReplyText(status int, body string) {
 	h.Reply(status, strings.NewReader(body))
 }
 
+func (h *Handler) ReplyError(status int, code, format string, args ...interface{}) {
+	h.ReplyErrorData(status, code, nil, format, args...)
+}
+
+func (h *Handler) ReplyErrorData(status int, code string, data ErrorData, format string, args ...interface{}) {
+	h.errorCode = code
+	h.Server.errorHandler(h, status, code, fmt.Sprintf(format, args...), data)
+}
+
+func (h *Handler) ReplyInternalError(status int, format string, args ...interface{}) {
+	msg := fmt.Sprintf(format, args...)
+	h.Log.Error("internal error: %s", msg)
+
+	if h.Server.Cfg.HideInternalErrors {
+		msg = "internal error"
+	}
+
+	h.ReplyError(status, "internal_error", msg)
+}
+
+func (h *Handler) ReplyNotImplemented(feature string) {
+	h.ReplyError(501, "not_implemented", "%s not implemented", feature)
+}
+
 func (h *Handler) logRequest() {
 	req := h.Request
 	w := h.ResponseWriter.(*ResponseWriter)
@@ -106,6 +132,10 @@ func (h *Handler) logRequest() {
 
 	if h.RequestId != "" {
 		data["requestId"] = h.RequestId
+	}
+
+	if h.errorCode != "" {
+		data["error"] = h.errorCode
 	}
 
 	statusString := "-"
