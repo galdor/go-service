@@ -119,10 +119,10 @@ func (s *Service) init() error {
 	initFuncs := []func() error{
 		s.initHostname,
 		s.initLogger,
+		s.initInflux,
 		s.initPgClients,
 		s.initHTTPServers,
 		s.initHTTPClients,
-		s.initInflux,
 	}
 
 	for _, initFunc := range initFuncs {
@@ -164,10 +164,42 @@ func (s *Service) initLogger() error {
 	return nil
 }
 
+func (s *Service) initInflux() error {
+	if s.Cfg.Influx == nil {
+		return nil
+	}
+
+	httpClientCfg := shttp.ClientCfg{
+		LogRequests: s.Cfg.Influx.LogRequests,
+	}
+
+	httpClient, err := shttp.NewClient(httpClientCfg)
+	if err != nil {
+		return fmt.Errorf("cannot create influx http client: %w", err)
+	}
+
+	cfg := *s.Cfg.Influx
+
+	cfg.Log = s.Log.Child("influx", log.Data{})
+	cfg.HTTPClient = httpClient.Client
+	cfg.Hostname = s.Hostname
+
+	client, err := influx.NewClient(cfg)
+	if err != nil {
+		return fmt.Errorf("cannot create influx client: %w", err)
+	}
+
+	s.Influx = client
+
+	return nil
+}
+
 func (s *Service) initHTTPServers() error {
 	for name, serverCfg := range s.Cfg.HTTPServers {
 		serverCfg.Log = s.Log.Child("http-server", log.Data{"server": name})
 		serverCfg.ErrorChan = s.errorChan
+		serverCfg.InfluxClient = s.Influx
+		serverCfg.Name = name
 
 		server, err := shttp.NewServer(serverCfg)
 		if err != nil {
@@ -181,16 +213,7 @@ func (s *Service) initHTTPServers() error {
 }
 
 func (s *Service) initHTTPClients() error {
-	clientCfgs := make(map[string]shttp.ClientCfg)
 	for name, clientCfg := range s.Cfg.HTTPClients {
-		clientCfgs[name] = clientCfg
-	}
-
-	if s.Cfg.Influx != nil {
-		clientCfgs["influx"] = influx.HTTPClientCfg(s.Cfg.Influx)
-	}
-
-	for name, clientCfg := range clientCfgs {
 		clientCfg.Log = s.Log.Child("http-client", log.Data{"client": name})
 
 		client, err := shttp.NewClient(clientCfg)
@@ -200,27 +223,6 @@ func (s *Service) initHTTPClients() error {
 
 		s.HTTPClients[name] = client
 	}
-
-	return nil
-}
-
-func (s *Service) initInflux() error {
-	if s.Cfg.Influx == nil {
-		return nil
-	}
-
-	cfg := *s.Cfg.Influx
-
-	cfg.Log = s.Log.Child("influx", log.Data{})
-	cfg.HTTPClient = s.HTTPClient("influx")
-	cfg.Hostname = s.Hostname
-
-	client, err := influx.NewClient(cfg)
-	if err != nil {
-		return fmt.Errorf("cannot create influx client: %w", err)
-	}
-
-	s.Influx = client
 
 	return nil
 }

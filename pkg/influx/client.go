@@ -11,13 +11,12 @@ import (
 	"time"
 
 	"github.com/galdor/go-service/pkg/log"
-	"github.com/galdor/go-service/pkg/shttp"
 )
 
 type ClientCfg struct {
-	Log        *log.Logger   `json:"-"`
-	HTTPClient *shttp.Client `json:"-"`
-	Hostname   string        `json:"-"`
+	Log        *log.Logger  `json:"-"`
+	HTTPClient *http.Client `json:"-"`
+	Hostname   string       `json:"-"`
 
 	URI         string            `json:"uri"`
 	Bucket      string            `json:"bucket"`
@@ -27,16 +26,10 @@ type ClientCfg struct {
 	LogRequests bool              `json:"logRequests,omitempty"`
 }
 
-func HTTPClientCfg(cfg *ClientCfg) shttp.ClientCfg {
-	return shttp.ClientCfg{
-		LogRequests: cfg.LogRequests,
-	}
-}
-
 type Client struct {
 	Cfg        ClientCfg
 	Log        *log.Logger
-	HTTPClient *shttp.Client
+	HTTPClient *http.Client
 
 	uri  *url.URL
 	tags map[string]string
@@ -108,6 +101,8 @@ func (c *Client) Start() {
 func (c *Client) Stop() {
 	close(c.stopChan)
 	c.wg.Wait()
+
+	c.HTTPClient.CloseIdleConnections()
 }
 
 func (c *Client) Terminate() {
