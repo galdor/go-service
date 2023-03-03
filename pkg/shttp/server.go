@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/galdor/go-service/pkg/influx"
 	"github.com/galdor/go-service/pkg/log"
 	"github.com/julienschmidt/httprouter"
 )
@@ -22,8 +23,10 @@ var (
 type RouteFunc func(*Handler)
 
 type ServerCfg struct {
-	Log       *log.Logger  `json:"-"`
-	ErrorChan chan<- error `json:"-"`
+	Log          *log.Logger    `json:"-"`
+	ErrorChan    chan<- error   `json:"-"`
+	InfluxClient *influx.Client `json:"-"`
+	Name         string         `json:"-"`
 
 	Address string `json:"address"`
 
@@ -55,6 +58,10 @@ func NewServer(cfg ServerCfg) (*Server, error) {
 
 	if cfg.ErrorChan == nil {
 		return nil, fmt.Errorf("missing error channel")
+	}
+
+	if cfg.Name == "" {
+		return nil, fmt.Errorf("missing or empty server name")
 	}
 
 	if cfg.Address == "" {
@@ -157,6 +164,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	h.start = time.Now()
 
+	defer h.sendInfluxPoints()
 	defer h.logRequest()
 
 	s.router.ServeHTTP(h.ResponseWriter, h.Request)
@@ -166,8 +174,11 @@ func (s *Server) Route(pathPattern, method string, routeFunc RouteFunc) {
 	handlerFunc := func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
 		h := requestHandler(req)
 		h.Request = req // the request may have been modified by the router
-
 		h.Query = req.URL.Query()
+
+		h.Method = method
+		h.PathPattern = pathPattern
+		h.RouteId = RouteId(method, pathPattern)
 
 		h.pathVariables = make(map[string]string)
 		for _, p := range params {

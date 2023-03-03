@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/galdor/go-service/pkg/influx"
 	"github.com/galdor/go-service/pkg/log"
 	"github.com/galdor/go-service/pkg/utils"
 )
@@ -16,14 +17,20 @@ type Handler struct {
 	Server *Server
 	Log    *log.Logger
 
+	Method      string
+	PathPattern string
+	RouteId     string // based on the method and path pattern
+
 	Request        *http.Request
+	Query          url.Values
 	ResponseWriter http.ResponseWriter
 
-	Query url.Values
-
-	start time.Time
-
+	start         time.Time
 	pathVariables map[string]string
+}
+
+func RouteId(method, pathPattern string) string {
+	return pathPattern + " " + method
 }
 
 func (h *Handler) PathVariable(name string) string {
@@ -98,4 +105,31 @@ func (h *Handler) logRequest() {
 	h.Log.InfoData(data, "%s %s %s %s",
 		req.Method, req.URL.Path, statusString,
 		utils.FormatSeconds(reqTime.Seconds(), 1))
+}
+
+func (h *Handler) sendInfluxPoints() {
+	if h.Server.Cfg.InfluxClient == nil {
+		return
+	}
+
+	w := h.ResponseWriter.(*ResponseWriter)
+
+	now := time.Now()
+	reqTime := time.Since(h.start)
+
+	tags := influx.Tags{
+		"server": h.Server.Cfg.Name,
+		"route":  h.RouteId,
+	}
+
+	fields := influx.Fields{
+		"time":         reqTime.Microseconds(),
+		"status":       w.Status,
+		"responseSize": w.ResponseBodySize,
+	}
+
+	point := influx.NewPointWithTimestamp("incomingHTTPRequests",
+		tags, fields, now)
+
+	h.Server.Cfg.InfluxClient.EnqueuePoint(point)
 }
