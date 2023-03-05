@@ -38,8 +38,9 @@ type ServerCfg struct {
 
 	TLS *TLSServerCfg `json:"tls"`
 
-	LogSuccessfulRequests bool `json:"logSuccessfulRequests"`
-	HideInternalErrors    bool `json:"hideInternalErrors"`
+	LogSuccessfulRequests        bool `json:"logSuccessfulRequests"`
+	HideInternalErrors           bool `json:"hideInternalErrors"`
+	DisableTrailingSlashHandling bool `json:"disableTrailingSlashHandling"`
 }
 
 type TLSServerCfg struct {
@@ -110,7 +111,7 @@ func NewServer(cfg ServerCfg) (*Server, error) {
 	s.router.HandleOPTIONS = true
 	s.router.PanicHandler = s.handlePanic
 	s.router.RedirectFixedPath = true
-	s.router.RedirectTrailingSlash = true
+	s.router.RedirectTrailingSlash = !s.Cfg.DisableTrailingSlashHandling
 
 	if cfg.ErrorHandler != nil {
 		s.errorHandler = cfg.ErrorHandler

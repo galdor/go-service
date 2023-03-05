@@ -32,6 +32,8 @@ type ServiceCfg struct {
 	HTTPClients map[string]shttp.ClientCfg
 	HTTPServers map[string]shttp.ServerCfg
 
+	ServiceAPI *ServiceAPICfg
+
 	Influx *influx.ClientCfg
 
 	PgClients map[string]pg.ClientCfg
@@ -84,6 +86,8 @@ type Service struct {
 	HTTPClients map[string]*shttp.Client
 	HTTPServers map[string]*shttp.Server
 
+	ServiceAPI *ServiceAPI
+
 	Influx *influx.Client
 
 	PgClients map[string]*pg.Client
@@ -123,6 +127,7 @@ func (s *Service) init() error {
 		s.initPgClients,
 		s.initHTTPServers,
 		s.initHTTPClients,
+		s.initServiceAPI,
 	}
 
 	for _, initFunc := range initFuncs {
@@ -195,6 +200,10 @@ func (s *Service) initInflux() error {
 }
 
 func (s *Service) initHTTPServers() error {
+	if apiCfg := s.Cfg.ServiceAPI; apiCfg != nil {
+		s.Cfg.AddHTTPServer("serviceAPI", apiCfg.HTTPServer)
+	}
+
 	for name, serverCfg := range s.Cfg.HTTPServers {
 		serverCfg.Log = s.Log.Child("http-server", log.Data{"server": name})
 		serverCfg.ErrorChan = s.errorChan
@@ -227,6 +236,21 @@ func (s *Service) initHTTPClients() error {
 	return nil
 }
 
+func (s *Service) initServiceAPI() error {
+	if s.Cfg.ServiceAPI == nil {
+		return nil
+	}
+
+	apiCfg := *s.Cfg.ServiceAPI
+
+	apiCfg.Log = s.Log.Child("serviceAPI", log.Data{})
+	apiCfg.Service = s
+
+	s.ServiceAPI = NewServiceAPI(apiCfg)
+
+	return nil
+}
+
 func (s *Service) initPgClients() error {
 	for name, clientCfg := range s.Cfg.PgClients {
 		clientCfg.Log = s.Log.Child("pg", log.Data{"client": name})
@@ -249,6 +273,12 @@ func (s *Service) start() error {
 
 	if err := s.startHTTPServers(); err != nil {
 		return err
+	}
+
+	if s.ServiceAPI != nil {
+		if err := s.ServiceAPI.Start(); err != nil {
+			return err
+		}
 	}
 
 	if err := s.Implementation.Start(s); err != nil {
@@ -293,6 +323,10 @@ func (s *Service) stop() error {
 	s.Log.Info("stopping")
 
 	s.Implementation.Stop(s)
+
+	if s.ServiceAPI != nil {
+		s.ServiceAPI.Stop()
+	}
 
 	s.stopHTTPClients()
 	s.stopHTTPServers()

@@ -13,10 +13,11 @@ import (
 )
 
 type ExampleCfg struct {
-	Logger        *log.LoggerCfg    `json:"logger"`
-	Influx        *influx.ClientCfg `json:"influx"`
-	APIHTTPServer shttp.ServerCfg   `json:"apiHTTPServer"`
-	Pg            pg.ClientCfg      `json:"pg"`
+	Logger        *log.LoggerCfg         `json:"logger"`
+	Influx        *influx.ClientCfg      `json:"influx"`
+	APIHTTPServer shttp.ServerCfg        `json:"apiHTTPServer"`
+	ServiceAPI    *service.ServiceAPICfg `json:"serviceAPI"`
+	Pg            pg.ClientCfg           `json:"pg"`
 }
 
 type Example struct {
@@ -44,6 +45,8 @@ func (e *Example) ServiceCfg() (*service.ServiceCfg, error) {
 	cfg.Influx = e.Cfg.Influx
 
 	cfg.AddHTTPServer("api", e.Cfg.APIHTTPServer)
+
+	cfg.ServiceAPI = e.Cfg.ServiceAPI
 
 	cfg.AddPgClient("main", e.Cfg.Pg)
 

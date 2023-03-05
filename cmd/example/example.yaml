@@ -11,6 +11,11 @@ pg:
   uri: "postgres://postgres:postgres@localhost:5432/service"
   applicationName: "service"
 
+serviceAPI:
+  httpServer:
+    address: "localhost:8100"
+    logSuccessfulRequests: true
+
 apiHTTPServer:
   address: "localhost:8081"
   logSuccessfulRequests: true
