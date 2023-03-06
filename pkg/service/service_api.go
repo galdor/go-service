@@ -6,6 +6,7 @@ import (
 
 	"github.com/galdor/go-service/pkg/log"
 	"github.com/galdor/go-service/pkg/shttp"
+	"github.com/galdor/go-service/pkg/sjson"
 )
 
 type ServiceAPICfg struct {
@@ -21,6 +22,10 @@ type ServiceAPI struct {
 	Log     *log.Logger
 
 	HTTPServer *shttp.Server
+}
+
+func (cfg *ServiceAPICfg) ValidateJSON(v *sjson.Validator) {
+	v.CheckStringNotEmpty("httpServer", cfg.HTTPServer)
 }
 
 func NewServiceAPI(cfg ServiceAPICfg) *ServiceAPI {

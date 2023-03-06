@@ -12,6 +12,7 @@ import (
 
 	"github.com/galdor/go-service/pkg/influx"
 	"github.com/galdor/go-service/pkg/log"
+	"github.com/galdor/go-service/pkg/sjson"
 	"github.com/galdor/go-service/pkg/utils"
 	"github.com/julienschmidt/httprouter"
 )
@@ -59,6 +60,15 @@ type Server struct {
 
 	errorChan chan<- error
 	wg        sync.WaitGroup
+}
+
+func (cfg *ServerCfg) ValidateJSON(v *sjson.Validator) {
+	v.CheckOptionalObject("tls", cfg.TLS)
+}
+
+func (cfg *TLSServerCfg) ValidateJSON(v *sjson.Validator) {
+	v.CheckStringNotEmpty("certificate", cfg.Certificate)
+	v.CheckStringNotEmpty("privateKey", cfg.PrivateKey)
 }
 
 func NewServer(cfg ServerCfg) (*Server, error) {

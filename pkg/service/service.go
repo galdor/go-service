@@ -11,6 +11,7 @@ import (
 	"github.com/galdor/go-service/pkg/log"
 	"github.com/galdor/go-service/pkg/pg"
 	"github.com/galdor/go-service/pkg/shttp"
+	"github.com/galdor/go-service/pkg/sjson"
 	"github.com/galdor/go-service/pkg/utils"
 )
 
@@ -60,6 +61,31 @@ type Service struct {
 	stopChan        chan struct{} // used to interrupt wait()
 	errorChan       chan error    // used to signal a fatal error
 	terminationChan chan struct{} // used to wait for termination in Stop()
+}
+
+func (cfg *ServiceCfg) ValidateJSON(v *sjson.Validator) {
+	v.CheckOptionalObject("logger", cfg.Logger)
+	v.CheckOptionalObject("influx", cfg.Influx)
+
+	v.Push("pgClients")
+	for name, clientCfg := range cfg.PgClients {
+		v.CheckObject(name, &clientCfg)
+	}
+	v.Pop()
+
+	v.Push("httpClients")
+	for name, clientCfg := range cfg.HTTPClients {
+		v.CheckObject(name, &clientCfg)
+	}
+	v.Pop()
+
+	v.Push("httpServers")
+	for name, serverCfg := range cfg.HTTPServers {
+		v.CheckObject(name, &serverCfg)
+	}
+	v.Pop()
+
+	v.CheckOptionalObject("serviceAPI", cfg.ServiceAPI)
 }
 
 func newService(cfg *ServiceCfg, implementation ServiceImplementation) *Service {

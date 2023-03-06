@@ -6,6 +6,7 @@ import (
 	"path"
 
 	"github.com/galdor/go-service/pkg/log"
+	"github.com/galdor/go-service/pkg/sjson"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -26,13 +27,19 @@ type Client struct {
 	Pool *pgxpool.Pool
 }
 
+func (cfg *ClientCfg) ValidateJSON(v *sjson.Validator) {
+	v.CheckStringURI("uri", cfg.URI)
+
+	v.Push("schemaNames")
+	for i, name := range cfg.SchemaNames {
+		v.CheckStringNotEmpty(i, name)
+	}
+	v.Pop()
+}
+
 func NewClient(cfg ClientCfg) (*Client, error) {
 	if cfg.Log == nil {
 		cfg.Log = log.DefaultLogger("pg")
-	}
-
-	if cfg.URI == "" {
-		return nil, fmt.Errorf("missing or empty uri")
 	}
 
 	poolCfg, err := pgxpool.ParseConfig(cfg.URI)

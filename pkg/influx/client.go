@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/galdor/go-service/pkg/log"
+	"github.com/galdor/go-service/pkg/sjson"
 )
 
 type ClientCfg struct {
@@ -41,6 +42,20 @@ type Client struct {
 	wg       sync.WaitGroup
 }
 
+func (cfg *ClientCfg) ValidateJSON(v *sjson.Validator) {
+	if cfg.URI != "" {
+		v.CheckStringURI("uri", cfg.URI)
+	}
+
+	v.CheckStringNotEmpty("bucket", cfg.Bucket)
+
+	v.Push("tags")
+	for name, value := range cfg.Tags {
+		v.CheckStringNotEmpty(name, value)
+	}
+	v.Pop()
+}
+
 func NewClient(cfg ClientCfg) (*Client, error) {
 	if cfg.Log == nil {
 		cfg.Log = log.DefaultLogger("influx")
@@ -56,10 +71,6 @@ func NewClient(cfg ClientCfg) (*Client, error) {
 	uri, err := url.Parse(cfg.URI)
 	if err != nil {
 		return nil, fmt.Errorf("invalid uri: %w", err)
-	}
-
-	if cfg.Bucket == "" {
-		return nil, fmt.Errorf("missing or empty bucket")
 	}
 
 	if cfg.BatchSize == 0 {

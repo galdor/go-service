@@ -8,6 +8,7 @@ import (
 	"github.com/galdor/go-service/pkg/log"
 	"github.com/galdor/go-service/pkg/service"
 	"github.com/galdor/go-service/pkg/shttp"
+	"github.com/galdor/go-service/pkg/sjson"
 )
 
 type ExampleCfg struct {
@@ -18,6 +19,10 @@ type Example struct {
 	Cfg     ExampleCfg
 	Service *service.Service
 	Log     *log.Logger
+}
+
+func (cfg *ExampleCfg) ValidateJSON(v *sjson.Validator) {
+	v.CheckObject("service", &cfg.Service)
 }
 
 func NewExample() *Example {

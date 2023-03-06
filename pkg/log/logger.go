@@ -7,6 +7,8 @@ import (
 	"log"
 	"strings"
 	"time"
+
+	"github.com/galdor/go-service/pkg/sjson"
 )
 
 type LoggerCfg struct {
@@ -20,6 +22,10 @@ type Logger struct {
 	Backend Backend
 	Domain  string
 	Data    Data
+}
+
+func (cfg *LoggerCfg) ValidateJSON(v *sjson.Validator) {
+	v.CheckStringNotEmpty("backendType", string(cfg.BackendType))
 }
 
 func DefaultLogger(name string) *Logger {
@@ -51,7 +57,7 @@ func NewLogger(name string, cfg LoggerCfg) (*Logger, error) {
 			return cfg.Backend, nil
 
 		case cfg.BackendData != nil:
-			if err := json.Unmarshal(*cfg.BackendData, cfgObj); err != nil {
+			if err := sjson.DecodeData(*cfg.BackendData, cfgObj); err != nil {
 				return nil,
 					fmt.Errorf("invalid backend configuration: %w", err)
 			}

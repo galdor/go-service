@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/galdor/go-service/pkg/log"
+	"github.com/galdor/go-service/pkg/sjson"
 )
 
 type ClientCfg struct {
@@ -36,6 +37,9 @@ type Client struct {
 	Client *http.Client
 
 	tlsCfg *tls.Config
+}
+
+func (cfg *ClientCfg) ValidateJSON(v *sjson.Validator) {
 }
 
 func NewClient(cfg ClientCfg) (*Client, error) {
