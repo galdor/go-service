@@ -1,21 +1,26 @@
-logger:
-  backendType: "terminal"
-  backend:
-    color: true
+service:
+  logger:
+    backendType: "terminal"
+    backend:
+      color: true
 
-influx:
-  uri: "http://localhost:8086"
-  bucket: "service/main"
+  influx:
+    uri: "http://localhost:8086"
+    bucket: "service/main"
 
-pg:
-  uri: "postgres://postgres:postgres@localhost:5432/service"
-  applicationName: "service"
+  pgClients:
+    main:
+      uri: "postgres://postgres:postgres@localhost:5432/service"
+      applicationName: "service"
 
-serviceAPI:
-  httpServer:
-    address: "localhost:8100"
-    logSuccessfulRequests: true
+  httpServers:
+    service:
+      address: "localhost:8100"
+      logSuccessfulRequests: true
 
-apiHTTPServer:
-  address: "localhost:8081"
-  logSuccessfulRequests: true
+    api:
+      address: "localhost:8081"
+      logSuccessfulRequests: true
+
+  serviceAPI:
+    httpServer: "service"

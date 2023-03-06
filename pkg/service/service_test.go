@@ -14,8 +14,7 @@ import (
 )
 
 type TestServiceCfg struct {
-	Logger *log.LoggerCfg `json:"logger"`
-	Pg     pg.ClientCfg   `json:"pg"`
+	Service ServiceCfg `json:"service"`
 }
 
 type TestService struct {
@@ -37,22 +36,16 @@ func NewTestService(t *testing.T) *TestService {
 	return &TestService{t: t}
 }
 
-func (ts *TestService) DefaultImplementationCfg() interface{} {
+func (ts *TestService) DefaultCfg() interface{} {
 	return &ts.Cfg
 }
 
-func (ts *TestService) ValidateImplementationCfg() error {
+func (ts *TestService) ValidateCfg() error {
 	return nil
 }
 
-func (ts *TestService) ServiceCfg() (*ServiceCfg, error) {
-	cfg := NewServiceCfg()
-
-	cfg.Logger = ts.Cfg.Logger
-
-	cfg.AddPgClient("main", ts.Cfg.Pg)
-
-	return cfg, nil
+func (ts *TestService) ServiceCfg() *ServiceCfg {
+	return &ts.Cfg.Service
 }
 
 func (ts *TestService) Init(s *Service) error {

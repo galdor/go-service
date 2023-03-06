@@ -1,10 +1,12 @@
-logger:
-  backendType: "terminal"
-  backend:
-    color: true
+service:
+  logger:
+    backendType: "terminal"
+    backend:
+      color: true
 
-pg:
-  uri: "postgres://postgres:postgres@localhost:5432/service"
-  applicationName: "service"
-  schemaDirectory: "test/pg/schemas"
-  schemaNames: ["test"]
+  pgClients:
+    main:
+      uri: "postgres://postgres:postgres@localhost:5432/service"
+      applicationName: "service"
+      schemaDirectory: "test/pg/schemas"
+      schemaNames: ["test"]

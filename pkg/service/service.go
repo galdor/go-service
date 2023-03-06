@@ -15,9 +15,9 @@ import (
 )
 
 type ServiceImplementation interface {
-	DefaultImplementationCfg() interface{}
-	ValidateImplementationCfg() error
-	ServiceCfg() (*ServiceCfg, error)
+	DefaultCfg() interface{}
+	ValidateCfg() error
+	ServiceCfg() *ServiceCfg
 	Init(*Service) error
 	Start(*Service) error
 	Stop(*Service)
@@ -27,27 +27,16 @@ type ServiceImplementation interface {
 type ServiceCfg struct {
 	name string
 
-	Logger *log.LoggerCfg
+	Logger *log.LoggerCfg `json:"logger"`
 
-	HTTPClients map[string]shttp.ClientCfg
-	HTTPServers map[string]shttp.ServerCfg
+	Influx *influx.ClientCfg `json:"influx"`
 
-	ServiceAPI *ServiceAPICfg
+	PgClients map[string]pg.ClientCfg `json:"pgClients"`
 
-	Influx *influx.ClientCfg
+	HTTPClients map[string]shttp.ClientCfg `json:"httpClients"`
+	HTTPServers map[string]shttp.ServerCfg `json:"httpServers"`
 
-	PgClients map[string]pg.ClientCfg
-}
-
-func NewServiceCfg() *ServiceCfg {
-	cfg := ServiceCfg{
-		HTTPClients: make(map[string]shttp.ClientCfg),
-		HTTPServers: make(map[string]shttp.ServerCfg),
-
-		PgClients: make(map[string]pg.ClientCfg),
-	}
-
-	return &cfg
+	ServiceAPI *ServiceAPICfg `json:"serviceAPI"`
 }
 
 func (cfg *ServiceCfg) AddHTTPClient(name string, clientCfg shttp.ClientCfg) {
@@ -200,10 +189,6 @@ func (s *Service) initInflux() error {
 }
 
 func (s *Service) initHTTPServers() error {
-	if apiCfg := s.Cfg.ServiceAPI; apiCfg != nil {
-		s.Cfg.AddHTTPServer("serviceAPI", apiCfg.HTTPServer)
-	}
-
 	for name, serverCfg := range s.Cfg.HTTPServers {
 		serverCfg.Log = s.Log.Child("http-server", log.Data{"server": name})
 		serverCfg.ErrorChan = s.errorChan
@@ -385,26 +370,23 @@ func Run(name, description string, implementation ServiceImplementation) {
 	p.ParseCommandLine()
 
 	// Configuration
-	implementationCfg := implementation.DefaultImplementationCfg()
+	cfg := implementation.DefaultCfg()
 
 	if p.IsOptionSet("cfg-file") {
 		cfgPath := p.OptionValue("cfg-file")
 
 		p.Info("loading configuration from %q", cfgPath)
 
-		if err := LoadCfg(cfgPath, implementationCfg); err != nil {
+		if err := LoadCfg(cfgPath, cfg); err != nil {
 			p.Fatal("cannot load configuration: %v", err)
 		}
 
-		if err := implementation.ValidateImplementationCfg(); err != nil {
+		if err := implementation.ValidateCfg(); err != nil {
 			p.Fatal("invalid configuration: %v", err)
 		}
 	}
 
-	serviceCfg, err := implementation.ServiceCfg()
-	if err != nil {
-		p.Fatal("invalid configuration: %v", err)
-	}
+	serviceCfg := implementation.ServiceCfg()
 
 	serviceCfg.name = name
 
@@ -433,22 +415,19 @@ func Run(name, description string, implementation ServiceImplementation) {
 
 func RunTest(name string, implementation ServiceImplementation, cfgPath string, readyChan chan<- struct{}) {
 	// Configuration
-	implementationCfg := implementation.DefaultImplementationCfg()
+	cfg := implementation.DefaultCfg()
 
 	if cfgPath != "" {
-		if err := LoadCfg(cfgPath, implementationCfg); err != nil {
+		if err := LoadCfg(cfgPath, cfg); err != nil {
 			utils.Abort("cannot load configuration: %v", err)
 		}
 
-		if err := implementation.ValidateImplementationCfg(); err != nil {
+		if err := implementation.ValidateCfg(); err != nil {
 			utils.Abort("invalid configuration: %v", err)
 		}
 	}
 
-	serviceCfg, err := implementation.ServiceCfg()
-	if err != nil {
-		utils.Abort("invalid configuration: %v", err)
-	}
+	serviceCfg := implementation.ServiceCfg()
 
 	serviceCfg.name = name
 

@@ -5,19 +5,13 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/galdor/go-service/pkg/influx"
 	"github.com/galdor/go-service/pkg/log"
-	"github.com/galdor/go-service/pkg/pg"
 	"github.com/galdor/go-service/pkg/service"
 	"github.com/galdor/go-service/pkg/shttp"
 )
 
 type ExampleCfg struct {
-	Logger        *log.LoggerCfg         `json:"logger"`
-	Influx        *influx.ClientCfg      `json:"influx"`
-	APIHTTPServer shttp.ServerCfg        `json:"apiHTTPServer"`
-	ServiceAPI    *service.ServiceAPICfg `json:"serviceAPI"`
-	Pg            pg.ClientCfg           `json:"pg"`
+	Service service.ServiceCfg `json:"service"`
 }
 
 type Example struct {
@@ -30,27 +24,16 @@ func NewExample() *Example {
 	return &Example{}
 }
 
-func (e *Example) DefaultImplementationCfg() interface{} {
+func (e *Example) DefaultCfg() interface{} {
 	return &e.Cfg
 }
 
-func (e *Example) ValidateImplementationCfg() error {
+func (e *Example) ValidateCfg() error {
 	return nil
 }
 
-func (e *Example) ServiceCfg() (*service.ServiceCfg, error) {
-	cfg := service.NewServiceCfg()
-
-	cfg.Logger = e.Cfg.Logger
-	cfg.Influx = e.Cfg.Influx
-
-	cfg.AddHTTPServer("api", e.Cfg.APIHTTPServer)
-
-	cfg.ServiceAPI = e.Cfg.ServiceAPI
-
-	cfg.AddPgClient("main", e.Cfg.Pg)
-
-	return cfg, nil
+func (e *Example) ServiceCfg() *service.ServiceCfg {
+	return &e.Cfg.Service
 }
 
 func (e *Example) Init(s *service.Service) error {

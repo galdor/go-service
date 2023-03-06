@@ -12,30 +12,35 @@ type ServiceAPICfg struct {
 	Log     *log.Logger `json:"-"`
 	Service *Service    `json:"-"`
 
-	HTTPServer shttp.ServerCfg `json:"httpServer"`
+	HTTPServer string `json:"httpServer"`
 }
 
 type ServiceAPI struct {
 	Cfg     ServiceAPICfg
 	Service *Service
 	Log     *log.Logger
+
+	HTTPServer *shttp.Server
 }
 
 func NewServiceAPI(cfg ServiceAPICfg) *ServiceAPI {
+	httpServerName := cfg.HTTPServer
+	httpServer := cfg.Service.HTTPServer(httpServerName)
+
 	// The pprof module breaks if we redirect /debug/pprof/ to /debug/pprof.
-	cfg.HTTPServer.DisableTrailingSlashHandling = true
+	httpServer.Cfg.DisableTrailingSlashHandling = true
 
 	return &ServiceAPI{
 		Cfg:     cfg,
 		Service: cfg.Service,
 		Log:     cfg.Log,
+
+		HTTPServer: httpServer,
 	}
 }
 
 func (s *ServiceAPI) Start() error {
-	server := s.Service.HTTPServer("serviceAPI")
-
-	s.initRoutes(server)
+	s.initRoutes(s.HTTPServer)
 
 	return nil
 }
