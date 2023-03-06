@@ -39,30 +39,6 @@ type ServiceCfg struct {
 	ServiceAPI *ServiceAPICfg `json:"serviceAPI"`
 }
 
-func (cfg *ServiceCfg) AddHTTPClient(name string, clientCfg shttp.ClientCfg) {
-	if _, found := cfg.HTTPClients[name]; found {
-		utils.Panicf("duplicate http client %q", name)
-	}
-
-	cfg.HTTPClients[name] = clientCfg
-}
-
-func (cfg *ServiceCfg) AddHTTPServer(name string, serverCfg shttp.ServerCfg) {
-	if _, found := cfg.HTTPServers[name]; found {
-		utils.Panicf("duplicate http server %q", name)
-	}
-
-	cfg.HTTPServers[name] = serverCfg
-}
-
-func (cfg *ServiceCfg) AddPgClient(name string, clientCfg pg.ClientCfg) {
-	if _, found := cfg.PgClients[name]; found {
-		utils.Panicf("duplicate pg client %q", name)
-	}
-
-	cfg.PgClients[name] = clientCfg
-}
-
 type Service struct {
 	Cfg *ServiceCfg
 	Log *log.Logger
