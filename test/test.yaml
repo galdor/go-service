@@ -4,9 +4,10 @@ service:
     backend:
       color: true
 
+  dataDirectory: "test/data"
+
   pgClients:
     main:
       uri: "postgres://postgres:postgres@localhost:5432/service"
       applicationName: "service"
-      schemaDirectory: "test/pg/schemas"
       schemaNames: ["test"]

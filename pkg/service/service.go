@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"path"
 	"syscall"
 
 	"github.com/galdor/go-program"
@@ -29,6 +30,8 @@ type ServiceCfg struct {
 	name string
 
 	Logger *log.LoggerCfg `json:"logger"`
+
+	DataDirectory string `json:"dataDirectory"`
 
 	Influx *influx.ClientCfg `json:"influx"`
 
@@ -65,6 +68,9 @@ type Service struct {
 
 func (cfg *ServiceCfg) ValidateJSON(v *sjson.Validator) {
 	v.CheckOptionalObject("logger", cfg.Logger)
+
+	v.CheckStringNotEmpty("dataDirectory", cfg.DataDirectory)
+
 	v.CheckOptionalObject("influx", cfg.Influx)
 
 	v.Push("pgClients")
@@ -239,8 +245,13 @@ func (s *Service) initServiceAPI() error {
 }
 
 func (s *Service) initPgClients() error {
+	defaultSchemaDirectory := path.Join(s.Cfg.DataDirectory, "pg", "schemas")
 	for name, clientCfg := range s.Cfg.PgClients {
 		clientCfg.Log = s.Log.Child("pg", log.Data{"client": name})
+
+		if clientCfg.SchemaDirectory == "" {
+			clientCfg.SchemaDirectory = defaultSchemaDirectory
+		}
 
 		client, err := pg.NewClient(clientCfg)
 		if err != nil {

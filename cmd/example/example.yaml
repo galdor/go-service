@@ -4,6 +4,8 @@ service:
     backend:
       color: true
 
+  dataDirectory: "data"
+
   influx:
     uri: "http://localhost:8086"
     bucket: "service/main"
