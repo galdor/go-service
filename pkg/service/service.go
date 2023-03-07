@@ -2,6 +2,8 @@ package service
 
 import (
 	"fmt"
+	htmltemplate "html/template"
+	texttemplate "html/template"
 	"os"
 	"os/signal"
 	"path"
@@ -52,14 +54,17 @@ type Service struct {
 
 	Hostname string
 
+	Influx *influx.Client
+
+	PgClients map[string]*pg.Client
+
 	HTTPClients map[string]*shttp.Client
 	HTTPServers map[string]*shttp.Server
 
 	ServiceAPI *ServiceAPI
 
-	Influx *influx.Client
-
-	PgClients map[string]*pg.Client
+	TextTemplate *texttemplate.Template
+	HTMLTemplate *htmltemplate.Template
 
 	stopChan        chan struct{} // used to interrupt wait()
 	errorChan       chan error    // used to signal a fatal error
@@ -125,6 +130,7 @@ func (s *Service) init() error {
 		s.initHTTPServers,
 		s.initHTTPClients,
 		s.initServiceAPI,
+		s.initTemplates,
 	}
 
 	for _, initFunc := range initFuncs {
@@ -240,6 +246,20 @@ func (s *Service) initServiceAPI() error {
 	apiCfg.Service = s
 
 	s.ServiceAPI = NewServiceAPI(apiCfg)
+
+	return nil
+}
+
+func (s *Service) initTemplates() error {
+	dirPath := path.Join(s.Cfg.DataDirectory, "templates")
+
+	textTemplate, htmlTemplate, err := LoadTemplates(dirPath)
+	if err != nil {
+		return fmt.Errorf("cannot load templates: %w", err)
+	}
+
+	s.TextTemplate = textTemplate
+	s.HTMLTemplate = htmlTemplate
 
 	return nil
 }

@@ -4,7 +4,7 @@ service:
     backend:
       color: true
 
-  dataDirectory: "data"
+  dataDirectory: "cmd/example/data"
 
   influx:
     uri: "http://localhost:8086"
