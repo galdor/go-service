@@ -1,6 +1,7 @@
 package service
 
 import (
+	"bytes"
 	"fmt"
 	htmltemplate "html/template"
 	texttemplate "html/template"
@@ -522,4 +523,24 @@ func (s *Service) PgClient(name string) *pg.Client {
 func (s *Service) AddTemplateFunctions(functions map[string]interface{}) {
 	s.TextTemplate.Funcs(functions)
 	s.HTMLTemplate.Funcs(functions)
+}
+
+func (s *Service) RenderTextTemplate(name string, data interface{}) ([]byte, error) {
+	var buf bytes.Buffer
+
+	if err := s.TextTemplate.ExecuteTemplate(&buf, name, data); err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
+}
+
+func (s *Service) RenderHTMLTemplate(name string, data interface{}) ([]byte, error) {
+	var buf bytes.Buffer
+
+	if err := s.HTMLTemplate.ExecuteTemplate(&buf, name, data); err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
 }
