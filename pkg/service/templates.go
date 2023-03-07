@@ -11,14 +11,16 @@ import (
 	"strings"
 )
 
-func LoadTemplates(dirPath string) (*texttemplate.Template, *htmltemplate.Template, error) {
-	// TODO funcmaps
+var templateFunctions = map[string]interface{}{}
 
+func LoadTemplates(dirPath string) (*texttemplate.Template, *htmltemplate.Template, error) {
 	textTemplate := texttemplate.New("")
 	textTemplate.Option("missingkey=error")
+	textTemplate.Funcs(templateFunctions)
 
 	htmlTemplate := htmltemplate.New("")
 	htmlTemplate.Option("missingkey=error")
+	htmlTemplate.Funcs(templateFunctions)
 
 	err := filepath.Walk(dirPath,
 		func(filePath string, info fs.FileInfo, err error) error {

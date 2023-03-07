@@ -518,3 +518,8 @@ func (s *Service) PgClient(name string) *pg.Client {
 
 	return client
 }
+
+func (s *Service) AddTemplateFunctions(functions map[string]interface{}) {
+	s.TextTemplate.Funcs(functions)
+	s.HTMLTemplate.Funcs(functions)
+}
