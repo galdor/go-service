@@ -7,8 +7,9 @@ import (
 	texttemplate "html/template"
 	"io/fs"
 	"os"
-	"path/filepath"
 	"strings"
+
+	"github.com/galdor/go-service/pkg/utils"
 )
 
 var templateFunctions = map[string]interface{}{}
@@ -22,26 +23,18 @@ func LoadTemplates(dirPath string) (*texttemplate.Template, *htmltemplate.Templa
 	htmlTemplate.Option("missingkey=error")
 	htmlTemplate.Funcs(templateFunctions)
 
-	err := filepath.Walk(dirPath,
-		func(filePath string, info fs.FileInfo, err error) error {
-			if err != nil {
-				return err
-			}
-
-			if info.IsDir() {
-				return nil
-			}
-
-			isText := strings.HasSuffix(filePath, ".txt.gotpl")
-			isHTML := strings.HasSuffix(filePath, ".html.gotpl")
+	err := utils.WalkFS(dirPath,
+		func(virtualPath, filePath string, info fs.FileInfo) error {
+			isText := strings.HasSuffix(virtualPath, ".txt.gotpl")
+			isHTML := strings.HasSuffix(virtualPath, ".html.gotpl")
 
 			if !isText && !isHTML {
 				return nil
 			}
 
 			start := len(dirPath) + 1
-			end := len(filePath) - len(".gotpl")
-			templateName := filePath[start:end]
+			end := len(virtualPath) - len(".gotpl")
+			templateName := virtualPath[start:end]
 
 			templateData, err := os.ReadFile(filePath)
 			if err != nil {
