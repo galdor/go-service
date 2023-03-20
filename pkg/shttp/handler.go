@@ -5,6 +5,8 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -13,6 +15,9 @@ import (
 	"github.com/galdor/go-service/pkg/log"
 	"github.com/galdor/go-service/pkg/utils"
 )
+
+var assetCacheBustingRE = regexp.MustCompile(
+	`^(.+)\.(?:[a-z0-9]+)\.([^.]+)$`)
 
 type Handler struct {
 	Server *Server
@@ -110,6 +115,41 @@ func (h *Handler) ReplyInternalError(status int, format string, args ...interfac
 
 func (h *Handler) ReplyNotImplemented(feature string) {
 	h.ReplyError(501, "not_implemented", "%s not implemented", feature)
+}
+
+func (h *Handler) ReplyFile(filePath string) {
+	filePath = rewriteAssetPath(filePath)
+
+	info, err := os.Stat(filePath)
+	if err != nil {
+		h.ReplyInternalError(500, "cannot stat %q: %v", filePath, err)
+		return
+	}
+
+	if !info.Mode().IsRegular() {
+		h.ReplyError(400, "%q is not a regular file", filePath)
+		return
+	}
+
+	modTime := info.ModTime()
+
+	body, err := os.Open(filePath)
+	if err != nil {
+		h.ReplyInternalError(500, "cannot open %q: %v", filePath, err)
+	}
+	defer body.Close()
+
+	http.ServeContent(h.ResponseWriter, h.Request, filePath, modTime, body)
+}
+
+func rewriteAssetPath(path string) string {
+	matches := assetCacheBustingRE.FindAllStringSubmatch(path, -1)
+	if len(matches) < 1 {
+		return path
+	}
+
+	groups := matches[0][1:]
+	return groups[0] + "." + groups[1]
 }
 
 func (h *Handler) logRequest() {

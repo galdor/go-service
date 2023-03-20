@@ -29,11 +29,12 @@ type ErrorData map[string]interface{}
 type ErrorHandler func(*Handler, int, string, string, ErrorData)
 
 type ServerCfg struct {
-	Log          *log.Logger    `json:"-"`
-	ErrorChan    chan<- error   `json:"-"`
-	InfluxClient *influx.Client `json:"-"`
-	Name         string         `json:"-"`
-	ErrorHandler ErrorHandler   `json:"-"`
+	Log           *log.Logger    `json:"-"`
+	ErrorChan     chan<- error   `json:"-"`
+	InfluxClient  *influx.Client `json:"-"`
+	Name          string         `json:"-"`
+	ErrorHandler  ErrorHandler   `json:"-"`
+	DataDirectory string         `json:"-"`
 
 	Address string `json:"address"`
 
@@ -82,6 +83,10 @@ func NewServer(cfg ServerCfg) (*Server, error) {
 
 	if cfg.Name == "" {
 		return nil, fmt.Errorf("missing or empty server name")
+	}
+
+	if cfg.DataDirectory == "" {
+		return nil, fmt.Errorf("missing or empty data directory")
 	}
 
 	if cfg.Address == "" {

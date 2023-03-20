@@ -209,6 +209,7 @@ func (s *Service) initHTTPServers() error {
 		serverCfg.ErrorChan = s.errorChan
 		serverCfg.InfluxClient = s.Influx
 		serverCfg.Name = name
+		serverCfg.DataDirectory = s.Cfg.DataDirectory
 
 		server, err := shttp.NewServer(serverCfg)
 		if err != nil {
