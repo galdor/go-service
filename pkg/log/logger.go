@@ -15,13 +15,15 @@ type LoggerCfg struct {
 	BackendType BackendType      `json:"backendType"`
 	BackendData *json.RawMessage `json:"backend,omitempty"`
 	Backend     interface{}      `json:"-"`
+	DebugLevel  int              `json:"debugLevel"`
 }
 
 type Logger struct {
-	Cfg     LoggerCfg
-	Backend Backend
-	Domain  string
-	Data    Data
+	Cfg        LoggerCfg
+	Backend    Backend
+	Domain     string
+	Data       Data
+	DebugLevel int
 }
 
 func (cfg *LoggerCfg) ValidateJSON(v *sjson.Validator) {
@@ -47,8 +49,9 @@ func NewLogger(name string, cfg LoggerCfg) (*Logger, error) {
 	l := &Logger{
 		Cfg: cfg,
 
-		Domain: name,
-		Data:   Data{},
+		Domain:     name,
+		Data:       Data{},
+		DebugLevel: cfg.DebugLevel,
 	}
 
 	backendCfg := func(cfgObj interface{}) (interface{}, error) {
@@ -95,14 +98,19 @@ func (l *Logger) Child(domain string, data Data) *Logger {
 		Cfg:     l.Cfg,
 		Backend: l.Backend,
 
-		Domain: childDomain,
-		Data:   MergeData(l.Data, data),
+		Domain:     childDomain,
+		Data:       MergeData(l.Data, data),
+		DebugLevel: l.DebugLevel,
 	}
 
 	return child
 }
 
 func (l *Logger) Log(msg Message) {
+	if msg.Level == LevelDebug && l.DebugLevel < msg.DebugLevel {
+		return
+	}
+
 	var t time.Time
 	if msg.Time == nil {
 		t = time.Now()
@@ -122,6 +130,23 @@ func (l *Logger) Log(msg Message) {
 	msg.Data = MergeData(l.Data, msg.Data)
 
 	l.Backend.Log(msg)
+}
+
+func (l *Logger) Debug(level int, format string, args ...interface{}) {
+	l.Log(Message{
+		Level:      LevelDebug,
+		DebugLevel: level,
+		Message:    fmt.Sprintf(format, args...),
+	})
+}
+
+func (l *Logger) DebugData(data Data, level int, format string, args ...interface{}) {
+	l.Log(Message{
+		Level:      LevelDebug,
+		DebugLevel: level,
+		Message:    fmt.Sprintf(format, args...),
+		Data:       data,
+	})
 }
 
 func (l *Logger) Info(format string, args ...interface{}) {
@@ -174,6 +199,8 @@ func (l *Logger) Write(data []byte) (int, error) {
 
 		levelString := string(data[:idx])
 		switch levelString {
+		case "debug":
+			level = LevelDebug
 		case "info":
 			level = LevelInfo
 		case "error":
