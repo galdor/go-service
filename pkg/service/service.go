@@ -10,7 +10,7 @@ import (
 	"path"
 	"syscall"
 
-	"github.com/galdor/go-program"
+	"github.com/exograd/go-program"
 	"github.com/galdor/go-service/pkg/influx"
 	"github.com/galdor/go-service/pkg/log"
 	"github.com/galdor/go-service/pkg/pg"
@@ -27,6 +27,12 @@ type ServiceImplementation interface {
 	Start(*Service) error
 	Stop(*Service)
 	Terminate(*Service)
+}
+
+type ServiceImplementationWithInitProgram interface {
+	ServiceImplementation
+
+	InitProgram(*program.Program)
 }
 
 type ServiceCfg struct {
@@ -52,6 +58,8 @@ type Service struct {
 
 	Name           string
 	Implementation ServiceImplementation
+
+	Program *program.Program
 
 	Hostname string
 
@@ -402,6 +410,10 @@ func Run(name, description string, implementation ServiceImplementation) {
 	p.AddFlag("", "validate-cfg",
 		"validate the configuration and exit")
 
+	if i2, ok := implementation.(ServiceImplementationWithInitProgram); ok {
+		i2.InitProgram(p)
+	}
+
 	p.ParseCommandLine()
 
 	// Configuration
@@ -432,6 +444,7 @@ func Run(name, description string, implementation ServiceImplementation) {
 
 	// Service
 	s := newService(serviceCfg, implementation)
+	s.Program = p
 
 	if err := s.init(); err != nil {
 		p.Fatal("cannot initialize service: %v", err)
