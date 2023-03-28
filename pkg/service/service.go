@@ -295,6 +295,8 @@ func (s *Service) initPgClients() error {
 }
 
 func (s *Service) start() error {
+	s.Log.Debug(1, "starting")
+
 	if s.Influx != nil {
 		s.Influx.Start()
 	}
@@ -313,7 +315,7 @@ func (s *Service) start() error {
 		return err
 	}
 
-	s.Log.Info("started")
+	s.Log.Debug(1, "started")
 
 	return nil
 }
@@ -348,7 +350,7 @@ func (s *Service) wait() {
 }
 
 func (s *Service) stop() error {
-	s.Log.Info("stopping")
+	s.Log.Debug(1, "stopping")
 
 	s.Implementation.Stop(s)
 
@@ -364,7 +366,7 @@ func (s *Service) stop() error {
 		s.Influx.Stop()
 	}
 
-	s.Log.Info("stopped")
+	s.Log.Debug(1, "stopped")
 
 	return nil
 }
