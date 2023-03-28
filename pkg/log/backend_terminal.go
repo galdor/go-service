@@ -24,6 +24,7 @@ var (
 
 type TerminalBackendCfg struct {
 	Color       bool `json:"color"`
+	ForceColor  bool `json:"forceColor"`
 	DomainWidth int  `json:"domain_width"`
 }
 
@@ -39,14 +40,17 @@ func NewTerminalBackend(cfg TerminalBackendCfg) *TerminalBackend {
 		domainWidth = cfg.DomainWidth
 	}
 
-	isCharDev, err := isCharDevice(os.Stderr)
-	if err != nil {
-		// If we cannot check for some reason, assume it is a character device
-		isCharDev = true
-	}
+	if !cfg.ForceColor {
+		isCharDev, err := isCharDevice(os.Stderr)
+		if err != nil {
+			// If we cannot check for some reason, assume it is a character
+			// device.
+			isCharDev = true
+		}
 
-	if !isCharDev {
-		cfg.Color = false
+		if !isCharDev {
+			cfg.Color = false
+		}
 	}
 
 	b := &TerminalBackend{
