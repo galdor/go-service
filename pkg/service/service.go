@@ -206,7 +206,7 @@ func (s *Service) initInflux() error {
 func (s *Service) initHTTPServers() error {
 	for name, serverCfg := range s.Cfg.HTTPServers {
 		serverCfg.Log = s.Log.Child("http-server", log.Data{"server": name})
-		serverCfg.ErrorChan = s.errorChan
+		serverCfg.ErrorChan = s.ErrorChan()
 		serverCfg.InfluxClient = s.Influx
 		serverCfg.Name = name
 		serverCfg.DataDirectory = s.Cfg.DataDirectory
@@ -492,6 +492,10 @@ func (s *Service) Stop() {
 	select {
 	case <-s.terminationChan:
 	}
+}
+
+func (s *Service) ErrorChan() chan<- error {
+	return s.errorChan
 }
 
 func (s *Service) HTTPClient(name string) *shttp.Client {
