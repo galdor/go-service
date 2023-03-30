@@ -112,11 +112,11 @@ func (h *Handler) ReplyInternalError(status int, format string, args ...interfac
 		msg = "internal error"
 	}
 
-	h.ReplyError(status, "internal_error", msg)
+	h.ReplyError(status, "internalError", msg)
 }
 
 func (h *Handler) ReplyNotImplemented(feature string) {
-	h.ReplyError(501, "not_implemented", "%s not implemented", feature)
+	h.ReplyError(501, "notImplemented", "%s not implemented", feature)
 }
 
 func (h *Handler) ReplyFile(filePath string) {
@@ -125,7 +125,7 @@ func (h *Handler) ReplyFile(filePath string) {
 	info, err := os.Stat(filePath)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
-			h.ReplyError(404, "not_found", "file not found")
+			h.ReplyError(404, "notFound", "file not found")
 			return
 		}
 
@@ -143,7 +143,7 @@ func (h *Handler) ReplyFile(filePath string) {
 	body, err := os.Open(filePath)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
-			h.ReplyError(404, "not_found", "file not found")
+			h.ReplyError(404, "notFound", "file not found")
 			return
 		}
 

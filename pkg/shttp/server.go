@@ -254,7 +254,7 @@ func (s *NotFoundHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	h := requestHandler(req)
 	s.Server.finalizeHandler(h, req, "", req.Method, nil, nil)
 
-	h.ReplyError(404, "not_found", "http route not found")
+	h.ReplyError(404, "notFound", "http route not found")
 }
 
 type MethodNotAllowedHandler struct {
@@ -265,7 +265,7 @@ func (s *MethodNotAllowedHandler) ServeHTTP(w http.ResponseWriter, req *http.Req
 	h := requestHandler(req)
 	s.Server.finalizeHandler(h, req, "", req.Method, nil, nil)
 
-	h.ReplyError(405, "method_not_allowed", "http method not allowed")
+	h.ReplyError(405, "methodNotAllowed", "http method not allowed")
 }
 
 func requestHandler(req *http.Request) *Handler {
