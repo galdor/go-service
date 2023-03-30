@@ -1,8 +1,10 @@
 package shttp
 
 import (
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/http"
 	"net/url"
 	"os"
@@ -122,6 +124,11 @@ func (h *Handler) ReplyFile(filePath string) {
 
 	info, err := os.Stat(filePath)
 	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			h.ReplyError(404, "not_found", "file not found")
+			return
+		}
+
 		h.ReplyInternalError(500, "cannot stat %q: %v", filePath, err)
 		return
 	}
@@ -135,7 +142,13 @@ func (h *Handler) ReplyFile(filePath string) {
 
 	body, err := os.Open(filePath)
 	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			h.ReplyError(404, "not_found", "file not found")
+			return
+		}
+
 		h.ReplyInternalError(500, "cannot open %q: %v", filePath, err)
+		return
 	}
 	defer body.Close()
 
