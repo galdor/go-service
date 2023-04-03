@@ -10,7 +10,7 @@ import (
 	"path"
 	"syscall"
 
-	"github.com/exograd/go-program"
+	"github.com/galdor/go-program"
 	"github.com/galdor/go-service/pkg/influx"
 	"github.com/galdor/go-service/pkg/log"
 	"github.com/galdor/go-service/pkg/pg"
