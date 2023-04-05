@@ -1,10 +1,12 @@
 package shttp
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"io/fs"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -15,6 +17,7 @@ import (
 
 	"github.com/galdor/go-service/pkg/influx"
 	"github.com/galdor/go-service/pkg/log"
+	"github.com/galdor/go-service/pkg/sjson"
 	"github.com/galdor/go-service/pkg/utils"
 )
 
@@ -64,6 +67,41 @@ func (h *Handler) HasQueryParameter(name string) bool {
 
 func (h *Handler) QueryParameter(name string) string {
 	return h.Query.Get(name)
+}
+
+func (h *Handler) RequestData() ([]byte, error) {
+	data, err := ioutil.ReadAll(h.Request.Body)
+	if err != nil {
+		h.ReplyInternalError(500, "cannot read request body: %v", err)
+		return nil, fmt.Errorf("cannot read request body: %w", err)
+	}
+
+	return data, nil
+}
+
+func (h *Handler) JSONRequestData(dest interface{}) error {
+	data, err := h.RequestData()
+	if err != nil {
+		return err
+	}
+
+	if err := json.Unmarshal(data, dest); err != nil {
+		h.ReplyError(400, "invalidRequestBody",
+			"invalid request body: %v", err)
+		return fmt.Errorf("invalid request body: %w", err)
+	}
+
+	if obj, ok := dest.(sjson.Validatable); ok {
+		v := sjson.NewValidator()
+
+		obj.ValidateJSON(v)
+
+		if err := v.Error(); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (h *Handler) Reply(status int, r io.Reader) {
