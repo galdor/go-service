@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"reflect"
+	"regexp"
 
 	"github.com/galdor/go-service/pkg/utils"
 )
@@ -99,9 +100,42 @@ func (v *Validator) Check(token interface{}, value bool, code, format string, ar
 	return value
 }
 
+func (v *Validator) CheckStringLengthMin(token interface{}, s string, min int) bool {
+	return v.Check(token, len(s) >= min, "stringTooShort",
+		"string length must be greater or equal to %d", min)
+}
+
+func (v *Validator) CheckStringLengthMax(token interface{}, s string, max int) bool {
+	return v.Check(token, len(s) <= max, "stringTooLong",
+		"string length must be lower or equal to %d", max)
+}
+
+func (v *Validator) CheckStringLengthMinMax(token interface{}, s string, min, max int) bool {
+	if !v.CheckStringLengthMin(token, s, min) {
+		return false
+	}
+
+	return v.CheckStringLengthMax(token, s, max)
+}
+
 func (v *Validator) CheckStringNotEmpty(token interface{}, s string) bool {
 	return v.Check(token, s != "", "missingOrEmptyString",
 		"missing or empty string")
+}
+
+func (v *Validator) CheckStringMatch(token interface{}, s string, re *regexp.Regexp) bool {
+	return v.CheckStringMatch2(token, s, re, "invalidStringFormat",
+		"string must match the following regular expression: %s",
+		re.String())
+}
+
+func (v *Validator) CheckStringMatch2(token interface{}, s string, re *regexp.Regexp, code, format string, args ...interface{}) bool {
+	if !re.MatchString(s) {
+		v.AddError(token, code, format, args...)
+		return false
+	}
+
+	return true
 }
 
 func (v *Validator) CheckStringURI(token interface{}, s string) bool {
