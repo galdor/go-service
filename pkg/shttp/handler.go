@@ -97,6 +97,7 @@ func (h *Handler) JSONRequestData(dest interface{}) error {
 		obj.ValidateJSON(v)
 
 		if err := v.Error(); err != nil {
+			h.ReplyValidationErrors(err)
 			return err
 		}
 	}
@@ -140,6 +141,15 @@ func (h *Handler) ReplyError(status int, code, format string, args ...interface{
 func (h *Handler) ReplyErrorData(status int, code string, data ErrorData, format string, args ...interface{}) {
 	h.errorCode = code
 	h.Server.errorHandler(h, status, code, fmt.Sprintf(format, args...), data)
+}
+
+func (h *Handler) ReplyValidationErrors(err error) {
+	data := map[string]interface{}{
+		"validationErrors": err,
+	}
+
+	h.ReplyErrorData(400, "invalidRequestBody", data,
+		"invalid request body:\n%v", err)
 }
 
 func (h *Handler) ReplyInternalError(status int, format string, args ...interface{}) {
