@@ -246,6 +246,20 @@ func DefaultErrorHandler(h *Handler, status int, code string, msg string, data E
 	h.ReplyText(status, code+": "+msg+"\n")
 }
 
+func JSONErrorHandler(h *Handler, status int, code string, msg string, data ErrorData) {
+	responseData := struct {
+		Code    string    `json:"code,omitempty"`
+		Message string    `json:"message"`
+		Data    ErrorData `json:"data,omitempty"`
+	}{
+		Code:    code,
+		Message: msg,
+		Data:    data,
+	}
+
+	h.ReplyJSON(status, responseData)
+}
+
 type NotFoundHandler struct {
 	Server *Server
 }

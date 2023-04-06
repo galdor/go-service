@@ -1,6 +1,7 @@
 package shttp
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -132,6 +133,23 @@ func (h *Handler) ReplyText(status int, body string) {
 	header.Set("Content-Type", "text/plain; charset=UTF-8")
 
 	h.Reply(status, strings.NewReader(body))
+}
+
+func (h *Handler) ReplyJSON(status int, value interface{}) {
+	header := h.ResponseWriter.Header()
+	header.Set("Content-Type", "application/json")
+
+	var buf bytes.Buffer
+	encoder := json.NewEncoder(&buf)
+	encoder.SetIndent("", "  ")
+
+	if err := encoder.Encode(value); err != nil {
+		h.Log.Error("cannot encode json response: %v", err)
+		h.ResponseWriter.WriteHeader(500)
+		return
+	}
+
+	h.Reply(status, &buf)
 }
 
 func (h *Handler) ReplyError(status int, code, format string, args ...interface{}) {
