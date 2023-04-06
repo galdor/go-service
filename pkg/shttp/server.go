@@ -260,6 +260,18 @@ func JSONErrorHandler(h *Handler, status int, code string, msg string, data Erro
 	h.ReplyJSON(status, responseData)
 }
 
+func AdaptativeErrorHandler(h *Handler, status int, code string, msg string, data ErrorData) {
+	var handler ErrorHandler
+
+	if requestAcceptText(h.Request) {
+		handler = DefaultErrorHandler
+	} else {
+		handler = JSONErrorHandler
+	}
+
+	handler(h, status, code, msg, data)
+}
+
 type NotFoundHandler struct {
 	Server *Server
 }
@@ -313,4 +325,23 @@ func requestClientAddress(req *http.Request) string {
 
 func requestId(req *http.Request) string {
 	return req.Header.Get("X-Request-Id")
+}
+
+func requestAcceptText(req *http.Request) bool {
+	accept := req.Header.Get("Accept")
+	if accept == "" {
+		return false
+	}
+
+	mediaTypes := strings.Split(accept, ",")
+
+	for _, mediaType := range mediaTypes {
+		mediaType = strings.TrimSpace(mediaType)
+
+		if strings.HasPrefix(mediaType, "text/") {
+			return true
+		}
+	}
+
+	return false
 }
