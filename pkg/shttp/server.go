@@ -93,11 +93,15 @@ func NewServer(cfg ServerCfg) (*Server, error) {
 		cfg.Address = "localhost:8080"
 	}
 
+	if cfg.ErrorHandler == nil {
+		cfg.ErrorHandler = DefaultErrorHandler
+	}
+
 	s := &Server{
 		Cfg: cfg,
 		Log: cfg.Log,
 
-		errorHandler: DefaultErrorHandler,
+		errorHandler: cfg.ErrorHandler,
 
 		errorChan: cfg.ErrorChan,
 	}
@@ -127,10 +131,6 @@ func NewServer(cfg ServerCfg) (*Server, error) {
 	s.router.PanicHandler = s.handlePanic
 	s.router.RedirectFixedPath = true
 	s.router.RedirectTrailingSlash = !s.Cfg.DisableTrailingSlashHandling
-
-	if cfg.ErrorHandler != nil {
-		s.errorHandler = cfg.ErrorHandler
-	}
 
 	return s, nil
 }
