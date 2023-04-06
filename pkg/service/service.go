@@ -44,10 +44,10 @@ type ServiceCfg struct {
 
 	Influx *influx.ClientCfg `json:"influx"`
 
-	PgClients map[string]pg.ClientCfg `json:"pgClients"`
+	PgClients map[string]*pg.ClientCfg `json:"pgClients"`
 
-	HTTPClients map[string]shttp.ClientCfg `json:"httpClients"`
-	HTTPServers map[string]shttp.ServerCfg `json:"httpServers"`
+	HTTPClients map[string]*shttp.ClientCfg `json:"httpClients"`
+	HTTPServers map[string]*shttp.ServerCfg `json:"httpServers"`
 
 	ServiceAPI *ServiceAPICfg `json:"serviceAPI"`
 }
@@ -89,19 +89,19 @@ func (cfg *ServiceCfg) ValidateJSON(v *sjson.Validator) {
 
 	v.Push("pgClients")
 	for name, clientCfg := range cfg.PgClients {
-		v.CheckObject(name, &clientCfg)
+		v.CheckObject(name, clientCfg)
 	}
 	v.Pop()
 
 	v.Push("httpClients")
 	for name, clientCfg := range cfg.HTTPClients {
-		v.CheckObject(name, &clientCfg)
+		v.CheckObject(name, clientCfg)
 	}
 	v.Pop()
 
 	v.Push("httpServers")
 	for name, serverCfg := range cfg.HTTPServers {
-		v.CheckObject(name, &serverCfg)
+		v.CheckObject(name, serverCfg)
 	}
 	v.Pop()
 
@@ -219,7 +219,7 @@ func (s *Service) initHTTPServers() error {
 		serverCfg.Name = name
 		serverCfg.DataDirectory = s.Cfg.DataDirectory
 
-		server, err := shttp.NewServer(serverCfg)
+		server, err := shttp.NewServer(*serverCfg)
 		if err != nil {
 			return fmt.Errorf("cannot create http server %q: %w", name, err)
 		}
@@ -234,7 +234,7 @@ func (s *Service) initHTTPClients() error {
 	for name, clientCfg := range s.Cfg.HTTPClients {
 		clientCfg.Log = s.Log.Child("http-client", log.Data{"client": name})
 
-		client, err := shttp.NewClient(clientCfg)
+		client, err := shttp.NewClient(*clientCfg)
 		if err != nil {
 			return fmt.Errorf("cannot create http client %q: %w", name, err)
 		}
@@ -283,7 +283,7 @@ func (s *Service) initPgClients() error {
 			clientCfg.SchemaDirectory = defaultSchemaDirectory
 		}
 
-		client, err := pg.NewClient(clientCfg)
+		client, err := pg.NewClient(*clientCfg)
 		if err != nil {
 			return fmt.Errorf("cannot create pg client %q: %w", name, err)
 		}
