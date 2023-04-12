@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/galdor/go-program v0.0.0-20230403162644-22adfbe9fbab
+	github.com/galdor/go-uuid v0.0.0-20230407141709-ff0a499e205e
 	github.com/jackc/pgx/v5 v5.3.0
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/stretchr/testify v1.8.1
