@@ -161,9 +161,9 @@ func (h *Handler) ReplyErrorData(status int, code string, data ErrorData, format
 	h.Server.errorHandler(h, status, code, fmt.Sprintf(format, args...), data)
 }
 
-func (h *Handler) ReplyValidationErrors(err error) {
-	data := map[string]interface{}{
-		"validationErrors": err,
+func (h *Handler) ReplyValidationErrors(err sjson.ValidationErrors) {
+	data := ValidationJSONErrorData{
+		ValidationErrors: err,
 	}
 
 	h.ReplyErrorData(400, "invalidRequestBody", data,

@@ -25,7 +25,7 @@ var (
 
 type RouteFunc func(*Handler)
 
-type ErrorData map[string]interface{}
+type ErrorData interface{}
 type ErrorHandler func(*Handler, int, string, string, ErrorData)
 
 type JSONError struct {
