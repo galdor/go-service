@@ -28,12 +28,6 @@ type RouteFunc func(*Handler)
 type ErrorData interface{}
 type ErrorHandler func(*Handler, int, string, string, ErrorData)
 
-type JSONError struct {
-	Code    string    `json:"code,omitempty"`
-	Message string    `json:"message"`
-	Data    ErrorData `json:"data,omitempty"`
-}
-
 type ServerCfg struct {
 	Log           *log.Logger    `json:"-"`
 	ErrorChan     chan<- error   `json:"-"`
@@ -67,14 +61,6 @@ type Server struct {
 
 	errorChan chan<- error
 	wg        sync.WaitGroup
-}
-
-func (err *JSONError) Error() string {
-	if err.Code == "" {
-		return err.Message
-	} else {
-		return fmt.Sprintf("%s: %s", err.Code, err.Message)
-	}
 }
 
 func (cfg *ServerCfg) ValidateJSON(v *sjson.Validator) {
@@ -267,7 +253,7 @@ func JSONErrorHandler(h *Handler, status int, code string, msg string, data Erro
 		Data:    data,
 	}
 
-	h.ReplyJSON(status, responseData)
+	h.ReplyJSON(status, &responseData)
 }
 
 func AdaptativeErrorHandler(h *Handler, status int, code string, msg string, data ErrorData) {
