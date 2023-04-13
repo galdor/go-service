@@ -5,10 +5,8 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"io"
 	"net"
 	"net/http"
-	"net/url"
 	"os"
 	"time"
 
@@ -93,19 +91,6 @@ func (c *Client) CloseConnections() {
 
 func (c *Client) Do(req *http.Request) (*http.Response, error) {
 	return c.Client.Do(req)
-}
-
-func (c *Client) SendRequest(method string, uri *url.URL, header map[string]string, body io.Reader) (*http.Response, error) {
-	req, err := http.NewRequest(method, uri.String(), body)
-	if err != nil {
-		return nil, fmt.Errorf("cannot create request: %w", err)
-	}
-
-	for name, value := range header {
-		req.Header.Set(name, value)
-	}
-
-	return c.Do(req)
 }
 
 func (c *Client) DialTLSContext(ctx context.Context, network, address string) (net.Conn, error) {
