@@ -134,12 +134,12 @@ func (s *Service) init() error {
 	initFuncs := []func() error{
 		s.initHostname,
 		s.initLogger,
+		s.initTemplates,
 		s.initInflux,
 		s.initPgClients,
 		s.initHTTPServers,
 		s.initHTTPClients,
 		s.initServiceAPI,
-		s.initTemplates,
 	}
 
 	for _, initFunc := range initFuncs {
@@ -177,6 +177,20 @@ func (s *Service) initLogger() error {
 	}
 
 	s.Log = logger
+
+	return nil
+}
+
+func (s *Service) initTemplates() error {
+	dirPath := path.Join(s.Cfg.DataDirectory, "templates")
+
+	textTemplate, htmlTemplate, err := LoadTemplates(dirPath)
+	if err != nil {
+		return fmt.Errorf("cannot load templates: %w", err)
+	}
+
+	s.TextTemplate = textTemplate
+	s.HTMLTemplate = htmlTemplate
 
 	return nil
 }
@@ -256,20 +270,6 @@ func (s *Service) initServiceAPI() error {
 	apiCfg.Service = s
 
 	s.ServiceAPI = NewServiceAPI(apiCfg)
-
-	return nil
-}
-
-func (s *Service) initTemplates() error {
-	dirPath := path.Join(s.Cfg.DataDirectory, "templates")
-
-	textTemplate, htmlTemplate, err := LoadTemplates(dirPath)
-	if err != nil {
-		return fmt.Errorf("cannot load templates: %w", err)
-	}
-
-	s.TextTemplate = textTemplate
-	s.HTMLTemplate = htmlTemplate
 
 	return nil
 }
