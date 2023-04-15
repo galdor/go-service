@@ -26,3 +26,7 @@ service:
 
   serviceAPI:
     httpServer: "service"
+
+  workers:
+    hello:
+      initialDelay: 1

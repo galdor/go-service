@@ -50,6 +50,8 @@ type ServiceCfg struct {
 	HTTPServers map[string]*shttp.ServerCfg `json:"httpServers"`
 
 	ServiceAPI *ServiceAPICfg `json:"serviceAPI"`
+
+	Workers map[string]*WorkerCfg `json:"workers"`
 }
 
 type Service struct {
@@ -71,6 +73,8 @@ type Service struct {
 	HTTPServers map[string]*shttp.Server
 
 	ServiceAPI *ServiceAPI
+
+	Workers map[string]*Worker
 
 	TextTemplate *texttemplate.Template
 	HTMLTemplate *htmltemplate.Template
@@ -120,6 +124,8 @@ func newService(cfg *ServiceCfg, implementation ServiceImplementation) *Service 
 
 		PgClients: make(map[string]*pg.Client),
 
+		Workers: make(map[string]*Worker),
+
 		stopChan:        make(chan struct{}, 1),
 		errorChan:       make(chan error),
 		terminationChan: make(chan struct{}),
@@ -140,6 +146,7 @@ func (s *Service) init() error {
 		s.initHTTPServers,
 		s.initHTTPClients,
 		s.initServiceAPI,
+		s.initWorkers,
 	}
 
 	for _, initFunc := range initFuncs {
@@ -274,6 +281,25 @@ func (s *Service) initServiceAPI() error {
 	return nil
 }
 
+func (s *Service) initWorkers() error {
+	for name, workerCfg := range s.Cfg.Workers {
+		if workerCfg.Disabled {
+			continue
+		}
+
+		workerCfg.Log = s.Log.Child("worker", log.Data{"worker": name})
+
+		worker, err := NewWorker(*workerCfg)
+		if err != nil {
+			return fmt.Errorf("cannot create worker %q: %w", name, err)
+		}
+
+		s.Workers[name] = worker
+	}
+
+	return nil
+}
+
 func (s *Service) initPgClients() error {
 	defaultSchemaDirectory := path.Join(s.Cfg.DataDirectory, "pg", "schemas")
 	for name, clientCfg := range s.Cfg.PgClients {
@@ -311,6 +337,10 @@ func (s *Service) start() error {
 		}
 	}
 
+	if err := s.startWorkers(); err != nil {
+		return err
+	}
+
 	if err := s.Implementation.Start(s); err != nil {
 		return err
 	}
@@ -324,6 +354,16 @@ func (s *Service) startHTTPServers() error {
 	for name, s := range s.HTTPServers {
 		if err := s.Start(); err != nil {
 			return fmt.Errorf("cannot start http server %q: %w", name, err)
+		}
+	}
+
+	return nil
+}
+
+func (s *Service) startWorkers() error {
+	for name, w := range s.Workers {
+		if err := w.Start(); err != nil {
+			return fmt.Errorf("cannot start worker %q: %w", name, err)
 		}
 	}
 
@@ -354,6 +394,8 @@ func (s *Service) stop() error {
 
 	s.Implementation.Stop(s)
 
+	s.stopWorkers()
+
 	if s.ServiceAPI != nil {
 		s.ServiceAPI.Stop()
 	}
@@ -369,6 +411,12 @@ func (s *Service) stop() error {
 	s.Log.Debug(1, "stopped")
 
 	return nil
+}
+
+func (s *Service) stopWorkers() {
+	for _, w := range s.Workers {
+		w.Stop()
+	}
 }
 
 func (s *Service) stopHTTPServers() {

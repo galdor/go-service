@@ -222,7 +222,7 @@ func (s *Server) handlePanic(w http.ResponseWriter, req *http.Request, data inte
 	msg := utils.RecoverValueString(data)
 	trace := utils.StackTrace(0, 20, true)
 
-	h.ReplyInternalError(500, "panic: "+msg+"\n\n"+trace)
+	h.ReplyInternalError(500, "panic: "+msg+"\n"+trace)
 }
 
 func (s *Server) finalizeHandler(h *Handler, req *http.Request, pathPattern, method string, routeFunc RouteFunc, params httprouter.Params) {

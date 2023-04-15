@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/galdor/go-service/pkg/log"
 	"github.com/galdor/go-service/pkg/service"
@@ -38,7 +39,12 @@ func (e *Example) ValidateCfg() error {
 }
 
 func (e *Example) ServiceCfg() *service.ServiceCfg {
-	return &e.Cfg.Service
+	cfg := &e.Cfg.Service
+
+	helloWorker := cfg.Workers["hello"]
+	helloWorker.WorkerFunc = e.helloWorker
+
+	return cfg
 }
 
 func (e *Example) Init(s *service.Service) error {
@@ -67,6 +73,11 @@ func (e *Example) Stop(s *service.Service) {
 }
 
 func (e *Example) Terminate(s *service.Service) {
+}
+
+func (e *Example) helloWorker(w *service.Worker) (time.Duration, error) {
+	w.Log.Info("hello world!")
+	return 5 * time.Second, nil
 }
 
 func (e *Example) hAPIPingGET(h *shttp.Handler) {
