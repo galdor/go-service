@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"sort"
+	"strconv"
 	"strings"
 )
 
@@ -67,8 +68,13 @@ func (b *TerminalBackend) Log(msg Message) {
 
 	domain := fmt.Sprintf("%-*s", b.domainWidth, msg.domain)
 
+	level := string(msg.Level)
+	if msg.Level == LevelDebug {
+		level += "." + strconv.Itoa(msg.DebugLevel)
+	}
+
 	fmt.Fprintf(&buf, "%-7s  %s  %s\n",
-		msg.Level, b.colorize(ColorGreen, domain), msg.Message)
+		level, b.colorize(ColorGreen, domain), msg.Message)
 
 	if len(msg.Data) > 0 {
 		fmt.Fprintf(&buf, "         ")
