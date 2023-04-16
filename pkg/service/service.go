@@ -588,6 +588,15 @@ func (s *Service) PgClient(name string) *pg.Client {
 	return client
 }
 
+func (s *Service) Worker(name string) *Worker {
+	worker, found := s.Workers[name]
+	if !found {
+		utils.Panicf("unknown worker %q", name)
+	}
+
+	return worker
+}
+
 func (s *Service) AddTemplateFunctions(functions map[string]interface{}) {
 	s.TextTemplate.Funcs(functions)
 	s.HTMLTemplate.Funcs(functions)
