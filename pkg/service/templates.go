@@ -6,13 +6,20 @@ import (
 	htmltemplate "html/template"
 	texttemplate "html/template"
 	"io/fs"
+	"net/url"
 	"os"
 	"strings"
 
+	"github.com/galdor/go-service/pkg/text"
 	"github.com/galdor/go-service/pkg/utils"
 )
 
-var templateFunctions = map[string]interface{}{}
+var templateFunctions = map[string]interface{}{
+	"encodeURIQueryParameter": url.QueryEscape,
+
+	"capitalize": text.Capitalize,
+	"toSentence": text.ToSentence,
+}
 
 func LoadTemplates(dirPath string) (*texttemplate.Template, *htmltemplate.Template, error) {
 	textTemplate := texttemplate.New("")
