@@ -259,7 +259,7 @@ func JSONErrorHandler(h *Handler, status int, code string, msg string, data Erro
 func AdaptativeErrorHandler(h *Handler, status int, code string, msg string, data ErrorData) {
 	var handler ErrorHandler
 
-	if requestAcceptText(h.Request) {
+	if RequestAcceptsText(h.Request) {
 		handler = DefaultErrorHandler
 	} else {
 		handler = JSONErrorHandler
@@ -323,7 +323,7 @@ func requestId(req *http.Request) string {
 	return req.Header.Get("X-Request-Id")
 }
 
-func requestAcceptText(req *http.Request) bool {
+func RequestAcceptsText(req *http.Request) bool {
 	accept := req.Header.Get("Accept")
 	if accept == "" {
 		return false
