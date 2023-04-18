@@ -20,6 +20,7 @@ import (
 	"github.com/galdor/go-service/pkg/log"
 	"github.com/galdor/go-service/pkg/sjson"
 	"github.com/galdor/go-service/pkg/utils"
+	"github.com/galdor/go-uuid"
 )
 
 var assetCacheBustingRE = regexp.MustCompile(
@@ -68,6 +69,24 @@ func (h *Handler) HasQueryParameter(name string) bool {
 
 func (h *Handler) QueryParameter(name string) string {
 	return h.Query.Get(name)
+}
+
+func (h *Handler) UUIDQueryParameter(name string) (uuid.UUID, error) {
+	s := h.QueryParameter(name)
+	if s == "" {
+		err := fmt.Errorf("missing or empty query parameter %q", name)
+		h.ReplyError(400, "invalidQueryParameter", "%v", err)
+		return uuid.Nil, err
+	}
+
+	var id uuid.UUID
+	if err := id.Parse(s); err != nil {
+		err := fmt.Errorf("invalid query parameter %q: %w", name, err)
+		h.ReplyError(400, "invalidQueryParameter", "%v", err)
+		return uuid.Nil, err
+	}
+
+	return id, nil
 }
 
 func (h *Handler) RequestData() ([]byte, error) {
