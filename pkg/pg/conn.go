@@ -13,6 +13,10 @@ type Conn interface {
 	QueryRow(context.Context, string, ...interface{}) pgx.Row
 }
 
+type Object interface {
+	FromRow(pgx.Row) error
+}
+
 func Exec(conn Conn, query string, args ...interface{}) (err error) {
 	ctx := context.Background()
 	_, err = conn.Exec(ctx, query, args...)
@@ -38,4 +42,10 @@ func Query(conn Conn, query string, args ...interface{}) (pgx.Rows, error) {
 func QueryRow(conn Conn, query string, args ...interface{}) pgx.Row {
 	ctx := context.Background()
 	return conn.QueryRow(ctx, query, args...)
+}
+
+func QueryObject(conn Conn, obj Object, query string, args ...interface{}) error {
+	ctx := context.Background()
+	row := conn.QueryRow(ctx, query, args...)
+	return obj.FromRow(row)
 }
