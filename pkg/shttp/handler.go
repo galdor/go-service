@@ -125,6 +125,11 @@ func (h *Handler) JSONRequestData(dest interface{}) error {
 	return nil
 }
 
+func (h *Handler) SetCookie(cookie *http.Cookie) {
+	header := h.ResponseWriter.Header()
+	header.Set("Set-Cookie", cookie.String())
+}
+
 func (h *Handler) Reply(status int, r io.Reader) {
 	h.ResponseWriter.WriteHeader(status)
 
