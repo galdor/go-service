@@ -3,8 +3,7 @@ package shttp
 import "net/http"
 
 type ResponseWriter struct {
-	Status           int
-	ResponseBodySize int
+	Status int
 
 	w http.ResponseWriter
 }
@@ -20,8 +19,6 @@ func (w *ResponseWriter) Header() http.Header {
 }
 
 func (w *ResponseWriter) Write(data []byte) (int, error) {
-	w.ResponseBodySize += len(data)
-
 	return w.w.Write(data)
 }
 

@@ -268,9 +268,8 @@ func (h *Handler) logRequest() {
 	reqTime := time.Since(h.start)
 
 	data := log.Data{
-		"event":        "http.incomingRequest",
-		"time":         reqTime.Microseconds(),
-		"responseSize": w.ResponseBodySize,
+		"event": "http.incomingRequest",
+		"time":  reqTime.Microseconds(),
 	}
 
 	if h.ClientAddress != "" {
@@ -315,9 +314,8 @@ func (h *Handler) sendInfluxPoints() {
 	}
 
 	fields := influx.Fields{
-		"time":         reqTime.Microseconds(),
-		"status":       w.Status,
-		"responseSize": w.ResponseBodySize,
+		"time":   reqTime.Microseconds(),
+		"status": w.Status,
 	}
 
 	if w.Status != 0 {
