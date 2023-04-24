@@ -36,10 +36,10 @@ func NewAPIClient(cfg APIClientCfg) (*APIClient, error) {
 	return &c, nil
 }
 
-func (c *APIClient) SendRequest(method, uriRefString string, reqBody, resBody interface{}) (int, error) {
+func (c *APIClient) SendRequest(method, uriRefString string, reqBody, resBody interface{}) (*http.Response, error) {
 	uriRef, err := url.Parse(uriRefString)
 	if err != nil {
-		return 0, fmt.Errorf("invalid uri reference: %w", err)
+		return nil, fmt.Errorf("invalid uri reference: %w", err)
 	}
 
 	uri := c.baseURI.ResolveReference(uriRef)
@@ -48,7 +48,7 @@ func (c *APIClient) SendRequest(method, uriRefString string, reqBody, resBody in
 	if reqBody != nil {
 		data, err := json.Marshal(reqBody)
 		if err != nil {
-			return 0, fmt.Errorf("cannot encode request body: %w", err)
+			return nil, fmt.Errorf("cannot encode request body: %w", err)
 		}
 
 		reqBodyReader = bytes.NewReader(data)
@@ -56,12 +56,12 @@ func (c *APIClient) SendRequest(method, uriRefString string, reqBody, resBody in
 
 	req, err := http.NewRequest(method, uri.String(), reqBodyReader)
 	if err != nil {
-		return 0, fmt.Errorf("cannot create request: %w", err)
+		return nil, fmt.Errorf("cannot create request: %w", err)
 	}
 
 	res, err := c.Client.Do(req)
 	if err != nil {
-		return 0, fmt.Errorf("cannot send request: %w", err)
+		return nil, fmt.Errorf("cannot send request: %w", err)
 	}
 	defer res.Body.Close()
 
@@ -69,7 +69,7 @@ func (c *APIClient) SendRequest(method, uriRefString string, reqBody, resBody in
 
 	resBodyData, err := io.ReadAll(res.Body)
 	if err != nil {
-		return status, fmt.Errorf("cannot read response body: %w", err)
+		return res, fmt.Errorf("cannot read response body: %w", err)
 	}
 
 	if status < 200 || status >= 400 {
@@ -82,15 +82,15 @@ func (c *APIClient) SendRequest(method, uriRefString string, reqBody, resBody in
 			baseError = errors.New(string(resBodyData))
 		}
 
-		return status, fmt.Errorf("request failed with status %d: %w",
-			status, baseError)
+		return res, fmt.Errorf("request failed with status %d: %w",
+			res, baseError)
 	}
 
 	if resBody != nil {
 		if err := json.Unmarshal(resBodyData, resBody); err != nil {
-			return status, fmt.Errorf("cannot decode response body: %w", err)
+			return res, fmt.Errorf("cannot decode response body: %w", err)
 		}
 	}
 
-	return status, nil
+	return res, nil
 }
