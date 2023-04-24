@@ -86,8 +86,10 @@ func (c *APIClient) SendRequest(method, uriRefString string, reqBody, resBody in
 			status, baseError)
 	}
 
-	if err := json.Unmarshal(resBodyData, resBody); err != nil {
-		return status, fmt.Errorf("cannot decode response body: %w", err)
+	if resBody != nil {
+		if err := json.Unmarshal(resBodyData, resBody); err != nil {
+			return status, fmt.Errorf("cannot decode response body: %w", err)
+		}
 	}
 
 	return status, nil
