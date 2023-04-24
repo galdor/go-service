@@ -89,7 +89,7 @@ func (c *APIClient) SendRequest(method, uriRefString string, reqBody, resBody in
 		}
 
 		return res, fmt.Errorf("request failed with status %d: %w",
-			res, baseError)
+			res.StatusCode, baseError)
 	}
 
 	if resBody != nil {
