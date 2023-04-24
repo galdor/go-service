@@ -18,6 +18,8 @@ type APIClientCfg struct {
 type APIClient struct {
 	Client *http.Client
 
+	Cookie *http.Cookie
+
 	baseURI *url.URL
 }
 
@@ -57,6 +59,10 @@ func (c *APIClient) SendRequest(method, uriRefString string, reqBody, resBody in
 	req, err := http.NewRequest(method, uri.String(), reqBodyReader)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create request: %w", err)
+	}
+
+	if c.Cookie != nil {
+		req.Header.Add("Cookie", c.Cookie.String())
 	}
 
 	res, err := c.Client.Do(req)
