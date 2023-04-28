@@ -20,11 +20,11 @@ func RandomName(prefix, suffix string) string {
 	return name
 }
 
-func RandomEmailAddress(suffix string) string {
+func RandomEmailAddress(prefix string) string {
 	address := uuid.MustGenerate(uuid.V7).String()
 
-	if suffix != "" {
-		address += "+" + suffix
+	if prefix != "" {
+		address = prefix + "+" + address
 	}
 
 	address += "@example.com"
