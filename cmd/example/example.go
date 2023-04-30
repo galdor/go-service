@@ -42,7 +42,9 @@ func (e *Example) ServiceCfg() *service.ServiceCfg {
 	cfg := &e.Cfg.Service
 
 	helloWorker := cfg.Workers["hello"]
-	helloWorker.WorkerFunc = e.helloWorker
+	if helloWorker != nil {
+		helloWorker.WorkerFunc = e.helloWorker
+	}
 
 	return cfg
 }
