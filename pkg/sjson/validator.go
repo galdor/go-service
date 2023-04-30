@@ -182,8 +182,7 @@ func (v *Validator) doCheckObject(token interface{}, value interface{}) bool {
 
 	value2, ok := value.(Validatable)
 	if !ok {
-		utils.Panicf("value %#v (%T) does not implement sjson.Validatable",
-			value, value)
+		return true
 	}
 
 	v.Push(token)
