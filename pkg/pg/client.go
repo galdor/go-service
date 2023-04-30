@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"path"
 
-	"github.com/galdor/go-service/pkg/log"
+	"github.com/galdor/go-log"
 	"github.com/galdor/go-service/pkg/sjson"
 	"github.com/jackc/pgx/v5/pgxpool"
 )

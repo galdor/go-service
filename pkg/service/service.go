@@ -12,7 +12,7 @@ import (
 
 	"github.com/galdor/go-program"
 	"github.com/galdor/go-service/pkg/influx"
-	"github.com/galdor/go-service/pkg/log"
+	"github.com/galdor/go-log"
 	"github.com/galdor/go-service/pkg/pg"
 	"github.com/galdor/go-service/pkg/shttp"
 	"github.com/galdor/go-service/pkg/sjson"

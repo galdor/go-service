@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/galdor/go-service/pkg/log"
+	"github.com/galdor/go-log"
 	"github.com/galdor/go-service/pkg/utils"
 )
 

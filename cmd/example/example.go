@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/galdor/go-service/pkg/log"
+	"github.com/galdor/go-log"
 	"github.com/galdor/go-service/pkg/service"
 	"github.com/galdor/go-service/pkg/shttp"
 	"github.com/galdor/go-service/pkg/sjson"

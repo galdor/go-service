@@ -17,7 +17,7 @@ import (
 	"time"
 
 	"github.com/galdor/go-service/pkg/influx"
-	"github.com/galdor/go-service/pkg/log"
+	"github.com/galdor/go-log"
 	"github.com/galdor/go-service/pkg/sjson"
 	"github.com/galdor/go-service/pkg/utils"
 	"github.com/galdor/go-uuid"
