@@ -7,11 +7,12 @@ import (
 	"reflect"
 	"regexp"
 
+	jsonpointer "github.com/galdor/go-json-pointer"
 	"github.com/galdor/go-service/pkg/utils"
 )
 
 type Validator struct {
-	Pointer Pointer
+	Pointer jsonpointer.Pointer
 	Errors  ValidationErrors
 }
 
@@ -20,9 +21,9 @@ type Validatable interface {
 }
 
 type ValidationError struct {
-	Pointer Pointer `json:"pointer"`
-	Code    string  `json:"code"`
-	Message string  `json:"message"`
+	Pointer jsonpointer.Pointer `json:"pointer"`
+	Code    string              `json:"code"`
+	Message string              `json:"message"`
 }
 
 type ValidationErrors []*ValidationError

@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io"
 	"strings"
+
+	jsonpointer "github.com/galdor/go-json-pointer"
 )
 
 // It would be nice to have a DecodeStrict() function which would use
@@ -35,11 +37,11 @@ func decode(d *json.Decoder, dest interface{}) error {
 func ConvertUnmarshallingError(err error) error {
 	switch err2 := err.(type) {
 	case *json.UnmarshalTypeError:
-		var pointer Pointer
+		var pointer jsonpointer.Pointer
 
 		if err2.Field != "" {
 			parts := strings.Split(err2.Field, ".")
-			pointer = NewPointer(parts...)
+			pointer = jsonpointer.NewPointer(parts...)
 		}
 
 		message := fmt.Sprintf("cannot decode %v into value of type %v",

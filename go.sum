@@ -2,6 +2,8 @@ github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ3
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+github.com/galdor/go-json-pointer v0.0.0-20230504163949-4352e78b9292 h1:zEQhZ+v76VflVeCJVDReztcXgojSBKhTbmPemSI1KBc=
+github.com/galdor/go-json-pointer v0.0.0-20230504163949-4352e78b9292/go.mod h1:DIqkzx3fQxSrx9JTKowUflyg+qGwfMU3VxYnS88r6hg=
 github.com/galdor/go-log v0.0.0-20230430112134-7f0743aaa8a4 h1:4wgvzK0SCjEhcNkcIE2r6dg3g1bPu2bPDihhIGZtaMM=
 github.com/galdor/go-log v0.0.0-20230430112134-7f0743aaa8a4/go.mod h1:R6YFiHlngxF96nawrfe/P2/lBiv2lTZJHdy+HCF6idk=
 github.com/galdor/go-program v0.0.0-20230403162644-22adfbe9fbab h1:czJoR/JfIjVSCadg2h9Br4AmcdWfwfbgeArAJKTdWMY=
