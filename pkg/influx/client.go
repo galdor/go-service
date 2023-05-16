@@ -10,8 +10,8 @@ import (
 	"sync"
 	"time"
 
+	jsonvalidator "github.com/galdor/go-json-validator"
 	"github.com/galdor/go-log"
-	"github.com/galdor/go-service/pkg/sjson"
 )
 
 type ClientCfg struct {
@@ -42,7 +42,7 @@ type Client struct {
 	wg       sync.WaitGroup
 }
 
-func (cfg *ClientCfg) ValidateJSON(v *sjson.Validator) {
+func (cfg *ClientCfg) ValidateJSON(v *jsonvalidator.Validator) {
 	if cfg.URI != "" {
 		v.CheckStringURI("uri", cfg.URI)
 	}

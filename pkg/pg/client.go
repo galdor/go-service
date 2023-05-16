@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"path"
 
+	jsonvalidator "github.com/galdor/go-json-validator"
 	"github.com/galdor/go-log"
-	"github.com/galdor/go-service/pkg/sjson"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -27,14 +27,14 @@ type Client struct {
 	Pool *pgxpool.Pool
 }
 
-func (cfg *ClientCfg) ValidateJSON(v *sjson.Validator) {
+func (cfg *ClientCfg) ValidateJSON(v *jsonvalidator.Validator) {
 	v.CheckStringURI("uri", cfg.URI)
 
-	v.Push("schemaNames")
-	for i, name := range cfg.SchemaNames {
-		v.CheckStringNotEmpty(i, name)
-	}
-	v.Pop()
+	v.WithChild("schemaNames", func() {
+		for i, name := range cfg.SchemaNames {
+			v.CheckStringNotEmpty(i, name)
+		}
+	})
 }
 
 func NewClient(cfg ClientCfg) (*Client, error) {

@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"net/http/pprof"
 
+	jsonvalidator "github.com/galdor/go-json-validator"
 	"github.com/galdor/go-log"
 	"github.com/galdor/go-service/pkg/shttp"
-	"github.com/galdor/go-service/pkg/sjson"
 )
 
 type ServiceAPICfg struct {
@@ -24,7 +24,7 @@ type ServiceAPI struct {
 	HTTPServer *shttp.Server
 }
 
-func (cfg *ServiceAPICfg) ValidateJSON(v *sjson.Validator) {
+func (cfg *ServiceAPICfg) ValidateJSON(v *jsonvalidator.Validator) {
 	v.CheckStringNotEmpty("httpServer", cfg.HTTPServer)
 }
 

@@ -10,8 +10,8 @@ import (
 	"os"
 	"time"
 
+	jsonvalidator "github.com/galdor/go-json-validator"
 	"github.com/galdor/go-log"
-	"github.com/galdor/go-service/pkg/sjson"
 )
 
 type ClientCfg struct {
@@ -37,7 +37,7 @@ type Client struct {
 	tlsCfg *tls.Config
 }
 
-func (cfg *ClientCfg) ValidateJSON(v *sjson.Validator) {
+func (cfg *ClientCfg) ValidateJSON(v *jsonvalidator.Validator) {
 }
 
 func NewClient(cfg ClientCfg) (*Client, error) {

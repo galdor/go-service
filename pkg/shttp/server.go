@@ -10,9 +10,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/galdor/go-service/pkg/influx"
+	jsonvalidator "github.com/galdor/go-json-validator"
 	"github.com/galdor/go-log"
-	"github.com/galdor/go-service/pkg/sjson"
+	"github.com/galdor/go-service/pkg/influx"
 	"github.com/galdor/go-service/pkg/utils"
 	"github.com/julienschmidt/httprouter"
 )
@@ -63,11 +63,11 @@ type Server struct {
 	wg        sync.WaitGroup
 }
 
-func (cfg *ServerCfg) ValidateJSON(v *sjson.Validator) {
+func (cfg *ServerCfg) ValidateJSON(v *jsonvalidator.Validator) {
 	v.CheckOptionalObject("tls", cfg.TLS)
 }
 
-func (cfg *TLSServerCfg) ValidateJSON(v *sjson.Validator) {
+func (cfg *TLSServerCfg) ValidateJSON(v *jsonvalidator.Validator) {
 	v.CheckStringNotEmpty("certificate", cfg.Certificate)
 	v.CheckStringNotEmpty("privateKey", cfg.PrivateKey)
 }

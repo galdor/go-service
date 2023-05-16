@@ -6,10 +6,10 @@ import (
 	"strconv"
 	"time"
 
+	jsonvalidator "github.com/galdor/go-json-validator"
 	"github.com/galdor/go-log"
 	"github.com/galdor/go-service/pkg/service"
 	"github.com/galdor/go-service/pkg/shttp"
-	"github.com/galdor/go-service/pkg/sjson"
 )
 
 type ExampleCfg struct {
@@ -22,7 +22,7 @@ type Example struct {
 	Log     *log.Logger
 }
 
-func (cfg *ExampleCfg) ValidateJSON(v *sjson.Validator) {
+func (cfg *ExampleCfg) ValidateJSON(v *jsonvalidator.Validator) {
 	v.CheckObject("service", &cfg.Service)
 }
 

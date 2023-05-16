@@ -16,9 +16,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/galdor/go-service/pkg/influx"
+	jsonvalidator "github.com/galdor/go-json-validator"
 	"github.com/galdor/go-log"
-	"github.com/galdor/go-service/pkg/sjson"
+	"github.com/galdor/go-service/pkg/influx"
 	"github.com/galdor/go-service/pkg/utils"
 	"github.com/galdor/go-uuid"
 )
@@ -111,8 +111,8 @@ func (h *Handler) JSONRequestData(dest interface{}) error {
 		return fmt.Errorf("invalid request body: %w", err)
 	}
 
-	if obj, ok := dest.(sjson.Validatable); ok {
-		v := sjson.NewValidator()
+	if obj, ok := dest.(jsonvalidator.Validatable); ok {
+		v := jsonvalidator.NewValidator()
 
 		obj.ValidateJSON(v)
 
@@ -185,7 +185,7 @@ func (h *Handler) ReplyErrorData(status int, code string, data ErrorData, format
 	h.Server.errorHandler(h, status, code, fmt.Sprintf(format, args...), data)
 }
 
-func (h *Handler) ReplyValidationErrors(err sjson.ValidationErrors) {
+func (h *Handler) ReplyValidationErrors(err jsonvalidator.ValidationErrors) {
 	data := ValidationJSONErrorData{
 		ValidationErrors: err,
 	}
