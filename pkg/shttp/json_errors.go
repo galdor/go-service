@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	jsonvalidator "github.com/galdor/go-json-validator"
+	"github.com/galdor/go-ejson"
 )
 
 // JSONError is the error structure used by all web and API HTTP servers. It
@@ -21,7 +21,7 @@ type JSONError struct {
 }
 
 type ValidationJSONErrorData struct {
-	ValidationErrors jsonvalidator.ValidationErrors `json:"validationErrors"`
+	ValidationErrors ejson.ValidationErrors `json:"validationErrors"`
 }
 
 func (err *JSONError) MarshalJSON() ([]byte, error) {

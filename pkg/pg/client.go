@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"path"
 
-	jsonvalidator "github.com/galdor/go-json-validator"
+	"github.com/galdor/go-ejson"
 	"github.com/galdor/go-log"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -27,7 +27,7 @@ type Client struct {
 	Pool *pgxpool.Pool
 }
 
-func (cfg *ClientCfg) ValidateJSON(v *jsonvalidator.Validator) {
+func (cfg *ClientCfg) ValidateJSON(v *ejson.Validator) {
 	v.CheckStringURI("uri", cfg.URI)
 
 	v.WithChild("schemaNames", func() {

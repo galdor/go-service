@@ -7,7 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 
-	jsonvalidator "github.com/galdor/go-json-validator"
+	"github.com/galdor/go-ejson"
 	"gopkg.in/yaml.v3"
 )
 
@@ -34,7 +34,7 @@ func LoadCfg(filePath string, dest interface{}) error {
 		return fmt.Errorf("cannot generate json data: %w", err)
 	}
 
-	if err := jsonvalidator.Unmarshal(jsonData, dest); err != nil {
+	if err := ejson.Unmarshal(jsonData, dest); err != nil {
 		return fmt.Errorf("cannot decode json data: %w", err)
 	}
 

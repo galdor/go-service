@@ -10,7 +10,7 @@ import (
 	"path"
 	"syscall"
 
-	jsonvalidator "github.com/galdor/go-json-validator"
+	"github.com/galdor/go-ejson"
 	"github.com/galdor/go-log"
 	"github.com/galdor/go-program"
 	"github.com/galdor/go-service/pkg/influx"
@@ -84,7 +84,7 @@ type Service struct {
 	terminationChan chan struct{} // used to wait for termination in Stop()
 }
 
-func (cfg *ServiceCfg) ValidateJSON(v *jsonvalidator.Validator) {
+func (cfg *ServiceCfg) ValidateJSON(v *ejson.Validator) {
 	v.CheckOptionalObject("logger", cfg.Logger)
 
 	v.CheckStringNotEmpty("dataDirectory", cfg.DataDirectory)
