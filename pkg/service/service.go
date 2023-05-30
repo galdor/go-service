@@ -492,6 +492,12 @@ func Run(name, description string, implementation ServiceImplementation) {
 		return
 	}
 
+	// The --debug command line option overrides what is in the configuration
+	// file.
+	if p.IsOptionSet("debug") {
+		serviceCfg.Logger.DebugLevel = p.DebugLevel
+	}
+
 	// Service
 	s := newService(serviceCfg, implementation)
 	s.Program = p
