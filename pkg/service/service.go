@@ -474,7 +474,11 @@ func Run(name, description string, implementation ServiceImplementation) {
 
 		p.Info("loading configuration from %q", cfgPath)
 
-		if err := LoadCfg(cfgPath, cfg); err != nil {
+		templateData := map[string]interface{}{
+			"Program": p,
+		}
+
+		if err := LoadCfg(cfgPath, templateData, cfg); err != nil {
 			p.Fatal("cannot load configuration: %v", err)
 		}
 
@@ -522,7 +526,7 @@ func RunTest(name string, implementation ServiceImplementation, cfgPath string, 
 	cfg := implementation.DefaultCfg()
 
 	if cfgPath != "" {
-		if err := LoadCfg(cfgPath, cfg); err != nil {
+		if err := LoadCfg(cfgPath, nil, cfg); err != nil {
 			utils.Abort("cannot load configuration: %v", err)
 		}
 
