@@ -117,7 +117,7 @@ func (h *Handler) JSONRequestData(dest interface{}) error {
 		obj.ValidateJSON(v)
 
 		if err := v.Error(); err != nil {
-			h.ReplyValidationErrors(err)
+			h.ReplyValidationErrors(err.(ejson.ValidationErrors))
 			return err
 		}
 	}

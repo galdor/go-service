@@ -3,7 +3,7 @@ module github.com/galdor/go-service
 go 1.20
 
 require (
-	github.com/galdor/go-ejson v0.0.0-20230529130336-c90232eb86a2
+	github.com/galdor/go-ejson v0.0.0-20230602162319-10f55b1bc313
 	github.com/galdor/go-json-validator v0.0.0-20230516142654-c9a3bb38ec11
 	github.com/galdor/go-log v0.0.0-20230430112134-7f0743aaa8a4
 	github.com/galdor/go-program v0.0.0-20230403162644-22adfbe9fbab

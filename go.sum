@@ -2,8 +2,8 @@ github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ3
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/galdor/go-ejson v0.0.0-20230529130336-c90232eb86a2 h1:dNJeeDoszur5GQAmpXakGZcvZqZOwc2clYyh3JNVt/8=
-github.com/galdor/go-ejson v0.0.0-20230529130336-c90232eb86a2/go.mod h1:KM+LPUqsRBfQQmoh/3lV8ndwUa1JxSsXJz/BRv7XN3Y=
+github.com/galdor/go-ejson v0.0.0-20230602162319-10f55b1bc313 h1:OFl5LflZt51B4SeazZghVJdY5xtqYJKN8LzAD/tl6+Y=
+github.com/galdor/go-ejson v0.0.0-20230602162319-10f55b1bc313/go.mod h1:KM+LPUqsRBfQQmoh/3lV8ndwUa1JxSsXJz/BRv7XN3Y=
 github.com/galdor/go-json-pointer v0.0.0-20230507182255-fb96822bc674 h1:WwsdzU10XrCKIY/ouMTdpFOMfejkeWNP1N5845DH7+Q=
 github.com/galdor/go-json-pointer v0.0.0-20230507182255-fb96822bc674/go.mod h1:DIqkzx3fQxSrx9JTKowUflyg+qGwfMU3VxYnS88r6hg=
 github.com/galdor/go-json-validator v0.0.0-20230516142654-c9a3bb38ec11 h1:PCHFKDeGS2iCY/5xqZ7NV89wWqQGnMp0jIw0sWLLYek=
