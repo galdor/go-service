@@ -75,14 +75,14 @@ func (h *Handler) UUIDQueryParameter(name string) (uuid.UUID, error) {
 	s := h.QueryParameter(name)
 	if s == "" {
 		err := fmt.Errorf("missing or empty query parameter %q", name)
-		h.ReplyError(400, "invalidQueryParameter", "%v", err)
+		h.ReplyError(400, "invalid_query_parameter", "%v", err)
 		return uuid.Nil, err
 	}
 
 	var id uuid.UUID
 	if err := id.Parse(s); err != nil {
 		err := fmt.Errorf("invalid query parameter %q: %w", name, err)
-		h.ReplyError(400, "invalidQueryParameter", "%v", err)
+		h.ReplyError(400, "invalid_query_parameter", "%v", err)
 		return uuid.Nil, err
 	}
 
@@ -106,7 +106,7 @@ func (h *Handler) JSONRequestData(dest interface{}) error {
 	}
 
 	if err := json.Unmarshal(data, dest); err != nil {
-		h.ReplyError(400, "invalidRequestBody",
+		h.ReplyError(400, "invalid_request_body",
 			"invalid request body: %v", err)
 		return fmt.Errorf("invalid request body: %w", err)
 	}
@@ -190,7 +190,7 @@ func (h *Handler) ReplyValidationErrors(err ejson.ValidationErrors) {
 		ValidationErrors: err,
 	}
 
-	h.ReplyErrorData(400, "invalidRequestBody", data,
+	h.ReplyErrorData(400, "invalid_request_body", data,
 		"invalid request body:\n%v", err)
 }
 
@@ -202,11 +202,11 @@ func (h *Handler) ReplyInternalError(status int, format string, args ...interfac
 		msg = "internal error"
 	}
 
-	h.ReplyError(status, "internalError", msg)
+	h.ReplyError(status, "internal_error", msg)
 }
 
 func (h *Handler) ReplyNotImplemented(feature string) {
-	h.ReplyError(501, "notImplemented", "%s not implemented", feature)
+	h.ReplyError(501, "not_implemented", "%s not implemented", feature)
 }
 
 func (h *Handler) ReplyFile(filePath string) {
@@ -215,7 +215,7 @@ func (h *Handler) ReplyFile(filePath string) {
 	info, err := os.Stat(filePath)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
-			h.ReplyError(404, "notFound", "file not found")
+			h.ReplyError(404, "not_found", "file not found")
 			return
 		}
 
@@ -233,7 +233,7 @@ func (h *Handler) ReplyFile(filePath string) {
 	body, err := os.Open(filePath)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
-			h.ReplyError(404, "notFound", "file not found")
+			h.ReplyError(404, "not_found", "file not found")
 			return
 		}
 
@@ -268,7 +268,7 @@ func (h *Handler) logRequest() {
 	reqTime := time.Since(h.start)
 
 	data := log.Data{
-		"event": "http.incomingRequest",
+		"event": "http.incoming_request",
 		"time":  reqTime.Microseconds(),
 	}
 
@@ -277,7 +277,7 @@ func (h *Handler) logRequest() {
 	}
 
 	if h.RequestId != "" {
-		data["requestId"] = h.RequestId
+		data["request_id"] = h.RequestId
 	}
 
 	if h.errorCode != "" {
@@ -322,7 +322,7 @@ func (h *Handler) sendInfluxPoints() {
 		fields["status"] = w.Status
 	}
 
-	point := influx.NewPointWithTimestamp("incomingHTTPRequests",
+	point := influx.NewPointWithTimestamp("incoming_http_requests",
 		tags, fields, now)
 
 	h.Server.Cfg.InfluxClient.EnqueuePoint(point)

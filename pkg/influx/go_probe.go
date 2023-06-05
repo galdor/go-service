@@ -34,7 +34,7 @@ func goProbeGoroutinesPoint(now time.Time) *Point {
 		"count": runtime.NumGoroutine(),
 	}
 
-	return NewPointWithTimestamp("goGoroutines", Tags{}, fields, now)
+	return NewPointWithTimestamp("go_goroutines", Tags{}, fields, now)
 }
 
 func goProbeMemoryPoint(now time.Time) *Point {
@@ -42,18 +42,18 @@ func goProbeMemoryPoint(now time.Time) *Point {
 	runtime.ReadMemStats(&stats)
 
 	fields := Fields{
-		"heapAlloc":    stats.HeapAlloc,
-		"heapSys":      stats.HeapSys,
-		"heapIdle":     stats.HeapIdle,
-		"heapInUse":    stats.HeapInuse,
-		"heapReleased": stats.HeapReleased,
+		"heap_alloc":    stats.HeapAlloc,
+		"heap_sys":      stats.HeapSys,
+		"heap_idle":     stats.HeapIdle,
+		"heap_in_use":   stats.HeapInuse,
+		"heap_released": stats.HeapReleased,
 
-		"stackInUse": stats.StackInuse,
-		"stackSys":   stats.StackSys,
+		"stack_in_use": stats.StackInuse,
+		"stack_sys":    stats.StackSys,
 
-		"nbGCs":             stats.NumGC,
-		"gcCPUTimeFraction": stats.GCCPUFraction,
+		"nb_gcs":               stats.NumGC,
+		"gc_cpu_time_fraction": stats.GCCPUFraction,
 	}
 
-	return NewPointWithTimestamp("goMemory", Tags{}, fields, now)
+	return NewPointWithTimestamp("go_memory", Tags{}, fields, now)
 }

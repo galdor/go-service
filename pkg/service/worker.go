@@ -15,7 +15,7 @@ type WorkerCfg struct {
 	Log          *log.Logger `json:"-"`
 	WorkerFunc   WorkerFunc  `json:"-"`
 	Disabled     bool        `json:"disabled"`
-	InitialDelay int         `json:"initialDelay"` // seconds
+	InitialDelay int         `json:"initial_delay"` // seconds
 }
 
 type Worker struct {

@@ -40,16 +40,16 @@ type ServiceCfg struct {
 
 	Logger *log.LoggerCfg `json:"logger"`
 
-	DataDirectory string `json:"dataDirectory"`
+	DataDirectory string `json:"data_directory"`
 
 	Influx *influx.ClientCfg `json:"influx"`
 
-	PgClients map[string]*pg.ClientCfg `json:"pgClients"`
+	PgClients map[string]*pg.ClientCfg `json:"pg_clients"`
 
-	HTTPClients map[string]*shttp.ClientCfg `json:"httpClients"`
-	HTTPServers map[string]*shttp.ServerCfg `json:"httpServers"`
+	HTTPClients map[string]*shttp.ClientCfg `json:"http_clients"`
+	HTTPServers map[string]*shttp.ServerCfg `json:"http_servers"`
 
-	ServiceAPI *ServiceAPICfg `json:"serviceAPI"`
+	ServiceAPI *ServiceAPICfg `json:"service_api"`
 
 	Workers map[string]*WorkerCfg `json:"workers"`
 }
@@ -87,29 +87,29 @@ type Service struct {
 func (cfg *ServiceCfg) ValidateJSON(v *ejson.Validator) {
 	v.CheckOptionalObject("logger", cfg.Logger)
 
-	v.CheckStringNotEmpty("dataDirectory", cfg.DataDirectory)
+	v.CheckStringNotEmpty("data_directory", cfg.DataDirectory)
 
 	v.CheckOptionalObject("influx", cfg.Influx)
 
-	v.Push("pgClients")
+	v.Push("pg_clients")
 	for name, clientCfg := range cfg.PgClients {
 		v.CheckObject(name, clientCfg)
 	}
 	v.Pop()
 
-	v.Push("httpClients")
+	v.Push("http_clients")
 	for name, clientCfg := range cfg.HTTPClients {
 		v.CheckObject(name, clientCfg)
 	}
 	v.Pop()
 
-	v.Push("httpServers")
+	v.Push("http_servers")
 	for name, serverCfg := range cfg.HTTPServers {
 		v.CheckObject(name, serverCfg)
 	}
 	v.Pop()
 
-	v.CheckOptionalObject("serviceAPI", cfg.ServiceAPI)
+	v.CheckOptionalObject("service_api", cfg.ServiceAPI)
 }
 
 func newService(cfg *ServiceCfg, implementation ServiceImplementation) *Service {
@@ -234,7 +234,7 @@ func (s *Service) initInflux() error {
 
 func (s *Service) initHTTPServers() error {
 	for name, serverCfg := range s.Cfg.HTTPServers {
-		serverCfg.Log = s.Log.Child("http-server", log.Data{"server": name})
+		serverCfg.Log = s.Log.Child("http_server", log.Data{"server": name})
 		serverCfg.ErrorChan = s.ErrorChan()
 		serverCfg.InfluxClient = s.Influx
 		serverCfg.Name = name
@@ -253,7 +253,7 @@ func (s *Service) initHTTPServers() error {
 
 func (s *Service) initHTTPClients() error {
 	for name, clientCfg := range s.Cfg.HTTPClients {
-		clientCfg.Log = s.Log.Child("http-client", log.Data{"client": name})
+		clientCfg.Log = s.Log.Child("http_client", log.Data{"client": name})
 
 		client, err := shttp.NewClient(*clientCfg)
 		if err != nil {
@@ -273,7 +273,7 @@ func (s *Service) initServiceAPI() error {
 
 	apiCfg := *s.Cfg.ServiceAPI
 
-	apiCfg.Log = s.Log.Child("serviceAPI", log.Data{})
+	apiCfg.Log = s.Log.Child("service_api", log.Data{})
 	apiCfg.Service = s
 
 	s.ServiceAPI = NewServiceAPI(apiCfg)

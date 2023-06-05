@@ -17,7 +17,7 @@ import (
 type ClientCfg struct {
 	Log *log.Logger `json:"-"`
 
-	LogRequests bool `json:"logRequests"`
+	LogRequests bool `json:"log_requests"`
 
 	TLS *TLSClientCfg `json:"tls"`
 
@@ -25,7 +25,7 @@ type ClientCfg struct {
 }
 
 type TLSClientCfg struct {
-	CACertificates []string `json:"caCertificates"`
+	CACertificates []string `json:"ca_certificates"`
 }
 
 type Client struct {

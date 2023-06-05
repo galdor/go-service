@@ -13,7 +13,7 @@ type ServiceAPICfg struct {
 	Log     *log.Logger `json:"-"`
 	Service *Service    `json:"-"`
 
-	HTTPServer string `json:"httpServer"`
+	HTTPServer string `json:"http_server"`
 }
 
 type ServiceAPI struct {
@@ -25,7 +25,7 @@ type ServiceAPI struct {
 }
 
 func (cfg *ServiceAPICfg) ValidateJSON(v *ejson.Validator) {
-	v.CheckStringNotEmpty("httpServer", cfg.HTTPServer)
+	v.CheckStringNotEmpty("http_server", cfg.HTTPServer)
 }
 
 func NewServiceAPI(cfg ServiceAPICfg) *ServiceAPI {

@@ -1,13 +1,13 @@
 service:
   logger:
-    backendType: "terminal"
-    terminalBackend:
+    backend_type: "terminal"
+    terminal_backend:
       color: true
 
-  dataDirectory: "test/data"
+  data_directory: "test/data"
 
-  pgClients:
+  pg_clients:
     main:
       uri: "postgres://postgres:postgres@localhost:5432/service"
-      applicationName: "service"
-      schemaNames: ["test"]
+      application_name: "service"
+      schema_names: ["test"]

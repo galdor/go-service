@@ -22,9 +22,9 @@ type ClientCfg struct {
 	URI         string            `json:"uri"`
 	Bucket      string            `json:"bucket"`
 	Org         string            `json:"org,omitempty"`
-	BatchSize   int               `json:"batchSize,omitempty"`
+	BatchSize   int               `json:"batch_size,omitempty"`
 	Tags        map[string]string `json:"tags,omitempty"`
-	LogRequests bool              `json:"logRequests,omitempty"`
+	LogRequests bool              `json:"log_requests,omitempty"`
 }
 
 type Client struct {

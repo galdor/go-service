@@ -40,14 +40,14 @@ type ServerCfg struct {
 
 	TLS *TLSServerCfg `json:"tls"`
 
-	LogSuccessfulRequests        bool `json:"logSuccessfulRequests"`
-	HideInternalErrors           bool `json:"hideInternalErrors"`
-	DisableTrailingSlashHandling bool `json:"disableTrailingSlashHandling"`
+	LogSuccessfulRequests        bool `json:"log_successful_requests"`
+	HideInternalErrors           bool `json:"hide_internal_errors"`
+	DisableTrailingSlashHandling bool `json:"disable_trailing_slash_handling"`
 }
 
 type TLSServerCfg struct {
 	Certificate string `json:"certificate"`
-	PrivateKey  string `json:"privateKey"`
+	PrivateKey  string `json:"private_key"`
 }
 
 type Server struct {
@@ -69,12 +69,12 @@ func (cfg *ServerCfg) ValidateJSON(v *ejson.Validator) {
 
 func (cfg *TLSServerCfg) ValidateJSON(v *ejson.Validator) {
 	v.CheckStringNotEmpty("certificate", cfg.Certificate)
-	v.CheckStringNotEmpty("privateKey", cfg.PrivateKey)
+	v.CheckStringNotEmpty("private_key", cfg.PrivateKey)
 }
 
 func NewServer(cfg ServerCfg) (*Server, error) {
 	if cfg.Log == nil {
-		cfg.Log = log.DefaultLogger("http-server")
+		cfg.Log = log.DefaultLogger("http_server")
 	}
 
 	if cfg.ErrorChan == nil {
@@ -276,7 +276,7 @@ func (s *NotFoundHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	h := requestHandler(req)
 	s.Server.finalizeHandler(h, req, "", req.Method, nil, nil)
 
-	h.ReplyError(404, "notFound", "http route not found")
+	h.ReplyError(404, "not_found", "http route not found")
 }
 
 type MethodNotAllowedHandler struct {
@@ -287,7 +287,7 @@ func (s *MethodNotAllowedHandler) ServeHTTP(w http.ResponseWriter, req *http.Req
 	h := requestHandler(req)
 	s.Server.finalizeHandler(h, req, "", req.Method, nil, nil)
 
-	h.ReplyError(405, "methodNotAllowed", "http method not allowed")
+	h.ReplyError(405, "method_not_allowed", "http method not allowed")
 }
 
 func requestHandler(req *http.Request) *Handler {

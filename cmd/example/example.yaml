@@ -1,32 +1,32 @@
 service:
   logger:
-    backendType: "terminal"
-    terminalBackend:
+    backend_type: "terminal"
+    terminal_backend:
       color: true
 
-  dataDirectory: "cmd/example/data"
+  data_directory: "cmd/example/data"
 
   influx:
     uri: "http://localhost:8086"
     bucket: "service/main"
 
-  pgClients:
+  pg_clients:
     main:
       uri: "postgres://postgres:postgres@localhost:5432/service"
-      applicationName: "service"
+      application_name: "service"
 
-  httpServers:
+  http_servers:
     service:
       address: "localhost:8100"
-      logSuccessfulRequests: true
+      log_successful_requests: true
 
     api:
       address: "localhost:8081"
-      logSuccessfulRequests: true
+      log_successful_requests: true
 
-  serviceAPI:
-    httpServer: "service"
+  service_api:
+    http_server: "service"
 
   workers:
     hello:
-      initialDelay: 1
+      initial_delay: 1

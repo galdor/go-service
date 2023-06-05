@@ -3,9 +3,9 @@ module github.com/galdor/go-service
 go 1.20
 
 require (
-	github.com/galdor/go-ejson v0.0.0-20230602162319-10f55b1bc313
+	github.com/galdor/go-ejson v0.0.0-20230605122655-508cae4357e4
 	github.com/galdor/go-json-validator v0.0.0-20230516142654-c9a3bb38ec11
-	github.com/galdor/go-log v0.0.0-20230430112134-7f0743aaa8a4
+	github.com/galdor/go-log v0.0.0-20230605123224-cb794ee76fa0
 	github.com/galdor/go-program v0.0.0-20230403162644-22adfbe9fbab
 	github.com/galdor/go-uuid v0.0.0-20230407141709-ff0a499e205e
 	github.com/jackc/pgx/v5 v5.3.0

@@ -21,7 +21,7 @@ type JSONError struct {
 }
 
 type ValidationJSONErrorData struct {
-	ValidationErrors ejson.ValidationErrors `json:"validationErrors"`
+	ValidationErrors ejson.ValidationErrors `json:"validation_errors"`
 }
 
 func (err *JSONError) MarshalJSON() ([]byte, error) {

@@ -14,10 +14,10 @@ type ClientCfg struct {
 	Log *log.Logger `json:"-"`
 
 	URI             string `json:"uri"`
-	ApplicationName string `json:"applicationName,omitempty"`
+	ApplicationName string `json:"application_name,omitempty"`
 
-	SchemaDirectory string   `json:"schemaDirectory"`
-	SchemaNames     []string `jsoN:"schemaNames"`
+	SchemaDirectory string   `json:"schema_directory"`
+	SchemaNames     []string `json:"schema_names"`
 }
 
 type Client struct {
@@ -30,7 +30,7 @@ type Client struct {
 func (cfg *ClientCfg) ValidateJSON(v *ejson.Validator) {
 	v.CheckStringURI("uri", cfg.URI)
 
-	v.WithChild("schemaNames", func() {
+	v.WithChild("schema_names", func() {
 		for i, name := range cfg.SchemaNames {
 			v.CheckStringNotEmpty(i, name)
 		}

@@ -12,7 +12,7 @@ import (
 
 type APIClientCfg struct {
 	Client  *http.Client `json:"-"`
-	BaseURI string       `json:"baseURI"`
+	BaseURI string       `json:"base_uri"`
 }
 
 type APIClient struct {
