@@ -160,12 +160,23 @@ func (h *Handler) ReplyText(status int, body string) {
 }
 
 func (h *Handler) ReplyJSON(status int, value interface{}) {
-	header := h.ResponseWriter.Header()
-	header.Set("Content-Type", "application/json")
-
 	var buf bytes.Buffer
 	encoder := json.NewEncoder(&buf)
 	encoder.SetIndent("", "  ")
+
+	h.replyJSON(status, value, encoder, &buf)
+}
+
+func (h *Handler) ReplyCompactJSON(status int, value interface{}) {
+	var buf bytes.Buffer
+	encoder := json.NewEncoder(&buf)
+
+	h.replyJSON(status, value, encoder, &buf)
+}
+
+func (h *Handler) replyJSON(status int, value interface{}, encoder *json.Encoder, buf *bytes.Buffer) {
+	header := h.ResponseWriter.Header()
+	header.Set("Content-Type", "application/json")
 
 	if err := encoder.Encode(value); err != nil {
 		h.Log.Error("cannot encode json response: %v", err)
@@ -173,7 +184,7 @@ func (h *Handler) ReplyJSON(status int, value interface{}) {
 		return
 	}
 
-	h.Reply(status, &buf)
+	h.Reply(status, buf)
 }
 
 func (h *Handler) ReplyError(status int, code, format string, args ...interface{}) {
