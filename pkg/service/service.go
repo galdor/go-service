@@ -52,6 +52,8 @@ type ServiceCfg struct {
 	ServiceAPI *ServiceAPICfg `json:"service_api"`
 
 	Workers map[string]*WorkerCfg `json:"workers"`
+
+	TemplateFuncMap map[string]interface{} `json:"-"`
 }
 
 type Service struct {
@@ -191,7 +193,8 @@ func (s *Service) initLogger() error {
 func (s *Service) initTemplates() error {
 	dirPath := path.Join(s.Cfg.DataDirectory, "templates")
 
-	textTemplate, htmlTemplate, err := LoadTemplates(dirPath)
+	textTemplate, htmlTemplate, err := LoadTemplates(dirPath,
+		s.Cfg.TemplateFuncMap)
 	if err != nil {
 		return fmt.Errorf("cannot load templates: %w", err)
 	}

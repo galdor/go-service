@@ -14,20 +14,22 @@ import (
 	"github.com/galdor/go-service/pkg/utils"
 )
 
-var templateFunctions = map[string]interface{}{
+var builtinTemplateFunctions = map[string]interface{}{
 	"encodeURIQueryParameter": url.QueryEscape,
 
 	"capitalize": text.Capitalize,
 	"toSentence": text.ToSentence,
 }
 
-func LoadTemplates(dirPath string) (*texttemplate.Template, *htmltemplate.Template, error) {
+func LoadTemplates(dirPath string, templateFunctions map[string]interface{}) (*texttemplate.Template, *htmltemplate.Template, error) {
 	textTemplate := texttemplate.New("")
 	textTemplate.Option("missingkey=error")
+	textTemplate.Funcs(builtinTemplateFunctions)
 	textTemplate.Funcs(templateFunctions)
 
 	htmlTemplate := htmltemplate.New("")
 	htmlTemplate.Option("missingkey=error")
+	htmlTemplate.Funcs(builtinTemplateFunctions)
 	htmlTemplate.Funcs(templateFunctions)
 
 	err := utils.WalkFS(dirPath,
