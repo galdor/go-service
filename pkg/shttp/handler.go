@@ -100,6 +100,10 @@ func (h *Handler) RequestData() ([]byte, error) {
 }
 
 func (h *Handler) JSONRequestData(dest interface{}) error {
+	return h.JSONRequestData2(dest, nil)
+}
+
+func (h *Handler) JSONRequestData2(dest interface{}, fn func(*ejson.Validator)) error {
 	data, err := h.RequestData()
 	if err != nil {
 		return err
@@ -115,6 +119,10 @@ func (h *Handler) JSONRequestData(dest interface{}) error {
 		v := ejson.NewValidator()
 
 		obj.ValidateJSON(v)
+
+		if fn != nil {
+			fn(v)
+		}
 
 		if err := v.Error(); err != nil {
 			h.ReplyValidationErrors(err.(ejson.ValidationErrors))
