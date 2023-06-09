@@ -4,11 +4,11 @@ import (
 	"errors"
 	"fmt"
 	htmltemplate "html/template"
-	texttemplate "html/template"
 	"io/fs"
 	"net/url"
 	"os"
 	"strings"
+	texttemplate "text/template"
 
 	"github.com/galdor/go-service/pkg/text"
 	"github.com/galdor/go-service/pkg/utils"

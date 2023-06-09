@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"fmt"
 	htmltemplate "html/template"
-	texttemplate "html/template"
 	"os"
 	"os/signal"
 	"path"
 	"syscall"
+	texttemplate "text/template"
 
 	"github.com/galdor/go-ejson"
 	"github.com/galdor/go-log"
