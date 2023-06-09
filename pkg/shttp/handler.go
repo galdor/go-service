@@ -24,7 +24,7 @@ import (
 )
 
 var assetCacheBustingRE = regexp.MustCompile(
-	`^(.+)\.(?:[a-z0-9]+)\.(css|js|woff2)$`)
+	`^(.+)\.(?:[a-z0-9]+)\.(css|js|jpg|png|woff2)$`)
 
 type Handler struct {
 	Server *Server
