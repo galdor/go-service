@@ -326,9 +326,17 @@ func (s *Service) initPgClients() error {
 func (s *Service) start() error {
 	s.Log.Debug(1, "starting")
 
+	// The implementation may use the Influx client so we start it first.
 	if s.Influx != nil {
 		s.Influx.Start()
 	}
+
+	if err := s.Implementation.Start(s); err != nil {
+		return err
+	}
+
+	// HTTP server handlers may use systems started by the implementation. So
+	// do workers. So they all start after the implemention.
 
 	if err := s.startHTTPServers(); err != nil {
 		return err
@@ -341,10 +349,6 @@ func (s *Service) start() error {
 	}
 
 	if err := s.startWorkers(); err != nil {
-		return err
-	}
-
-	if err := s.Implementation.Start(s); err != nil {
 		return err
 	}
 
