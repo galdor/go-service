@@ -3,7 +3,17 @@ package utils
 import (
 	"fmt"
 	"math"
+	"time"
 )
+
+func UseUTCTimezone() {
+	location, err := time.LoadLocation("UTC")
+	if err != nil {
+		Panicf("cannot load UTC location: %v", err)
+	}
+
+	time.Local = location
+}
 
 func FormatSeconds(s float64, precision int) string {
 	switch {
