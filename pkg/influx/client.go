@@ -12,6 +12,7 @@ import (
 
 	"github.com/galdor/go-ejson"
 	"github.com/galdor/go-log"
+	"github.com/galdor/go-service/pkg/breaker"
 )
 
 type ClientCfg struct {
@@ -25,6 +26,8 @@ type ClientCfg struct {
 	BatchSize   int               `json:"batch_size,omitempty"`
 	Tags        map[string]string `json:"tags,omitempty"`
 	LogRequests bool              `json:"log_requests,omitempty"`
+
+	Breaker breaker.BreakerCfg `json:"breaker,omitempty"`
 }
 
 type Client struct {
@@ -37,6 +40,8 @@ type Client struct {
 
 	pointsChan chan Points
 	points     Points
+
+	breaker *breaker.Breaker
 
 	stopChan chan struct{}
 	wg       sync.WaitGroup
@@ -85,6 +90,9 @@ func NewClient(cfg ClientCfg) (*Client, error) {
 		tags[name] = value
 	}
 
+	breakerCfg := cfg.Breaker
+	breakerCfg.Log = cfg.Log.Child("breaker", nil)
+
 	c := &Client{
 		Cfg:        cfg,
 		Log:        cfg.Log,
@@ -94,6 +102,8 @@ func NewClient(cfg ClientCfg) (*Client, error) {
 		tags: tags,
 
 		pointsChan: make(chan Points),
+
+		breaker: breaker.NewBreaker(breakerCfg),
 
 		stopChan: make(chan struct{}),
 	}
@@ -192,9 +202,12 @@ func (c *Client) flush() {
 		return
 	}
 
-	if err := c.sendPoints(c.points); err != nil {
-		c.Log.Error("cannot send points: %v", err)
-		return
+	if c.breaker.IsClosed() {
+		if err := c.sendPoints(c.points); err != nil {
+			c.Log.Error("cannot send points: %v", err)
+			c.breaker.Open()
+			return
+		}
 	}
 
 	c.points = nil
