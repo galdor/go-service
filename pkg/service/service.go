@@ -514,11 +514,21 @@ func Run(name, description string, implementation ServiceImplementation) {
 	s.Program = p
 
 	if err := s.init(); err != nil {
-		p.Fatal("cannot initialize service: %v", err)
+		// We want to use the service logger as much as possible. It is
+		// initialized first in (*Service).init so most of the time we should
+		// be able to use it.
+
+		if s.Log != nil {
+			s.Log.Error("cannot initialize service: %v", err)
+			os.Exit(1)
+		} else {
+			p.Fatal("cannot initialize service: %v", err)
+		}
 	}
 
 	if err := s.start(); err != nil {
-		p.Fatal("cannot start service: %v", err)
+		s.Log.Error("cannot start service: %v", err)
+		os.Exit(1)
 	}
 
 	s.wait()
