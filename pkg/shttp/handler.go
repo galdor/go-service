@@ -46,14 +46,6 @@ type Handler struct {
 	errorCode     string
 }
 
-func RouteId(method, pathPattern string) string {
-	if method == "" || pathPattern == "" {
-		return ""
-	}
-
-	return pathPattern + " " + method
-}
-
 func (h *Handler) PathVariable(name string) string {
 	value, found := h.pathVariables[name]
 	if !found {

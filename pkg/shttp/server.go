@@ -43,6 +43,7 @@ type ServerCfg struct {
 	LogSuccessfulRequests        bool `json:"log_successful_requests"`
 	HideInternalErrors           bool `json:"hide_internal_errors"`
 	DisableTrailingSlashHandling bool `json:"disable_trailing_slash_handling"`
+	MethodLessRouteIds           bool `json:"method_less_route_ids"`
 }
 
 type TLSServerCfg struct {
@@ -231,7 +232,7 @@ func (s *Server) finalizeHandler(h *Handler, req *http.Request, pathPattern, met
 
 	h.Method = method
 	h.PathPattern = pathPattern
-	h.RouteId = RouteId(method, pathPattern)
+	h.RouteId = s.RouteId(method, pathPattern)
 
 	h.ClientAddress = requestClientAddress(req)
 	h.RequestId = requestId(req)
@@ -240,6 +241,22 @@ func (s *Server) finalizeHandler(h *Handler, req *http.Request, pathPattern, met
 	for _, p := range params {
 		h.pathVariables[p.Key] = p.Value
 	}
+}
+
+func (s *Server) RouteId(method, pathPattern string) string {
+	if pathPattern == "" {
+		return ""
+	}
+
+	if s.Cfg.MethodLessRouteIds {
+		return pathPattern
+	}
+
+	if method == "" {
+		return ""
+	}
+
+	return pathPattern + " " + method
 }
 
 func DefaultErrorHandler(h *Handler, status int, code string, msg string, data ErrorData) {
