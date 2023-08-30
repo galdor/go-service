@@ -22,6 +22,7 @@ type ClientCfg struct {
 	URI         string            `json:"uri"`
 	Bucket      string            `json:"bucket"`
 	Org         string            `json:"org,omitempty"`
+	Token       string            `json:"token,omitempty"`
 	BatchSize   int               `json:"batch_size,omitempty"`
 	Tags        map[string]string `json:"tags,omitempty"`
 	LogRequests bool              `json:"log_requests,omitempty"`
@@ -218,6 +219,10 @@ func (c *Client) sendPoints(points Points) error {
 	req, err := http.NewRequest("POST", uri.String(), &buf)
 	if err != nil {
 		return fmt.Errorf("cannot create request: %w", err)
+	}
+
+	if c.Cfg.Token != "" {
+		req.Header.Add("Authorization", "Token "+c.Cfg.Token)
 	}
 
 	res, err := c.HTTPClient.Do(req)
