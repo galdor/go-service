@@ -324,13 +324,27 @@ func (h *Handler) sendInfluxPoints() {
 		tags["route"] = h.RouteId
 	}
 
+	var status string
+	if w.Status >= 200 && w.Status < 300 {
+		status = "2xx"
+	} else if w.Status >= 300 && w.Status < 400 {
+		status = "3xx"
+	} else if w.Status >= 400 && w.Status < 500 {
+		status = "4xx"
+	} else if w.Status >= 500 && w.Status < 600 {
+		status = "5xx"
+	}
+	if status != "" {
+		tags["status"] = status
+	}
+
 	fields := influx.Fields{
-		"req_time": reqTime.Microseconds(),
-		"status":   w.Status,
+		"req_time":    reqTime.Microseconds(),
+		"status_code": w.Status,
 	}
 
 	if w.Status != 0 {
-		fields["status"] = w.Status
+		fields["status_code"] = w.Status
 	}
 
 	point := influx.NewPointWithTimestamp("incoming_http_requests",
