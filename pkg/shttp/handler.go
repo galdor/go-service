@@ -325,8 +325,8 @@ func (h *Handler) sendInfluxPoints() {
 	}
 
 	fields := influx.Fields{
-		"time":   reqTime.Microseconds(),
-		"status": w.Status,
+		"req_time": reqTime.Microseconds(),
+		"status":   w.Status,
 	}
 
 	if w.Status != 0 {
