@@ -510,19 +510,35 @@ func Run(name, description string, implementation ServiceImplementation) {
 	}
 
 	// Service
+	//
+	// We setup recovery early to catch potential initialization panic.
 	s := newService(serviceCfg, implementation)
 	s.Program = p
+
+	defer func() {
+		if v := recover(); v != nil {
+			msg := utils.RecoverValueString(v)
+			trace := utils.StackTrace(0, 20, true)
+
+			if s.Log == nil {
+				p.Error("panic: %s\n%s", msg, trace)
+			} else {
+				s.Log.Error("panic: %s\n%s", msg, trace)
+				os.Exit(1)
+			}
+		}
+	}()
 
 	if err := s.init(); err != nil {
 		// We want to use the service logger as much as possible. It is
 		// initialized first in (*Service).init so most of the time we should
 		// be able to use it.
 
-		if s.Log != nil {
+		if s.Log == nil {
+			p.Fatal("cannot initialize service: %v", err)
+		} else {
 			s.Log.Error("cannot initialize service: %v", err)
 			os.Exit(1)
-		} else {
-			p.Fatal("cannot initialize service: %v", err)
 		}
 	}
 
