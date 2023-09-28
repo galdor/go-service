@@ -12,10 +12,19 @@ import (
 
 	"github.com/galdor/go-ejson"
 	"github.com/galdor/go-log"
+	"github.com/galdor/go-service/pkg/utils"
+)
+
+const (
+	DefaultClientConnectionTimeout = 30 // seconds
+	DefaultClientRequestTimeout    = 30 // seconds
 )
 
 type ClientCfg struct {
 	Log *log.Logger `json:"-"`
+
+	ConnectionTimeout *int `json:"connection_timeout"` // seconds
+	RequestTimeout    *int `json:"request_timeout"`    // seconds
 
 	LogRequests bool `json:"log_requests"`
 
@@ -41,11 +50,19 @@ func (cfg *ClientCfg) ValidateJSON(v *ejson.Validator) {
 }
 
 func NewClient(cfg ClientCfg) (*Client, error) {
+	if cfg.ConnectionTimeout == nil {
+		cfg.ConnectionTimeout = utils.Ref(DefaultClientConnectionTimeout)
+	}
+
+	if cfg.RequestTimeout == nil {
+		cfg.RequestTimeout = utils.Ref(DefaultClientRequestTimeout)
+	}
+
 	transport := &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
 
 		DialContext: (&net.Dialer{
-			Timeout:   30 * time.Second,
+			Timeout:   time.Duration(*cfg.ConnectionTimeout) * time.Second,
 			KeepAlive: 30 * time.Second,
 		}).DialContext,
 
@@ -67,7 +84,7 @@ func NewClient(cfg ClientCfg) (*Client, error) {
 	}
 
 	client := &http.Client{
-		Timeout:   30 * time.Second,
+		Timeout:   time.Duration(*cfg.RequestTimeout) * time.Second,
 		Transport: NewRoundTripper(transport, &cfg),
 	}
 
