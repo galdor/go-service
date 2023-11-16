@@ -283,6 +283,10 @@ func (h *Handler) logRequest() {
 		"time":  reqTime.Microseconds(),
 	}
 
+	if h.PathPattern != "" {
+		data["route"] = h.PathPattern
+	}
+
 	if h.ClientAddress != "" {
 		data["address"] = h.ClientAddress
 	}
