@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"path"
+	"time"
 
 	"github.com/galdor/go-ejson"
 	"github.com/galdor/go-log"
@@ -66,6 +67,9 @@ func NewClient(cfg ClientCfg) (*Client, error) {
 	}
 
 	poolCfg.MaxConns = int32(cfg.PoolSize)
+
+	poolCfg.MaxConnIdleTime = 10 * time.Minute
+	poolCfg.MaxConnLifetimeJitter = time.Second
 
 	cfg.Log.Info("connecting to database %q at %s:%d as %q",
 		poolCfg.ConnConfig.Database,
