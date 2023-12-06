@@ -10,11 +10,15 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+const DefaultPoolSize = 5
+
 type ClientCfg struct {
 	Log *log.Logger `json:"-"`
 
 	URI             string `json:"uri"`
 	ApplicationName string `json:"application_name,omitempty"`
+
+	PoolSize int `json:"pool_size,omitempty"`
 
 	SchemaDirectory string   `json:"schema_directory"`
 	SchemaNames     []string `json:"schema_names"`
@@ -30,6 +34,11 @@ type Client struct {
 func (cfg *ClientCfg) ValidateJSON(v *ejson.Validator) {
 	v.CheckStringURI("uri", cfg.URI)
 
+	if cfg.PoolSize != 0 {
+		// We need at least 2 connections for schema management
+		v.CheckIntMinMax("pool_size", cfg.PoolSize, 2, 1000)
+	}
+
 	v.WithChild("schema_names", func() {
 		for i, name := range cfg.SchemaNames {
 			v.CheckStringNotEmpty(i, name)
@@ -42,6 +51,10 @@ func NewClient(cfg ClientCfg) (*Client, error) {
 		cfg.Log = log.DefaultLogger("pg")
 	}
 
+	if cfg.PoolSize == 0 {
+		cfg.PoolSize = DefaultPoolSize
+	}
+
 	poolCfg, err := pgxpool.ParseConfig(cfg.URI)
 	if err != nil {
 		return nil, fmt.Errorf("invalid uri: %w", err)
@@ -51,6 +64,8 @@ func NewClient(cfg ClientCfg) (*Client, error) {
 		runtimeParams := poolCfg.ConnConfig.RuntimeParams
 		runtimeParams["application_name"] = cfg.ApplicationName
 	}
+
+	poolCfg.MaxConns = int32(cfg.PoolSize)
 
 	cfg.Log.Info("connecting to database %q at %s:%d as %q",
 		poolCfg.ConnConfig.Database,
