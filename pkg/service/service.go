@@ -307,6 +307,8 @@ func (s *Service) initPgClients() error {
 	defaultSchemaDirectory := path.Join(s.Cfg.DataDirectory, "pg", "schemas")
 	for name, clientCfg := range s.Cfg.PgClients {
 		clientCfg.Log = s.Log.Child("pg", log.Data{"client": name})
+		clientCfg.InfluxClient = s.Influx
+		clientCfg.Name = name
 
 		if clientCfg.SchemaDirectory == "" {
 			clientCfg.SchemaDirectory = defaultSchemaDirectory

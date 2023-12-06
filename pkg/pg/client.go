@@ -5,10 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"path"
+	"sync"
 	"time"
 
 	"github.com/galdor/go-ejson"
 	"github.com/galdor/go-log"
+	"github.com/galdor/go-service/pkg/influx"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -22,7 +24,9 @@ var (
 )
 
 type ClientCfg struct {
-	Log *log.Logger `json:"-"`
+	Log          *log.Logger    `json:"-"`
+	InfluxClient *influx.Client `json:"-"`
+	Name         string         `json:"-"`
 
 	URI             string `json:"uri"`
 	ApplicationName string `json:"application_name,omitempty"`
@@ -42,6 +46,9 @@ type Client struct {
 	Pool *pgxpool.Pool
 
 	connectionAcquisitionTimeout time.Duration
+
+	stopChan chan struct{}
+	wg       sync.WaitGroup
 }
 
 func (cfg *ClientCfg) ValidateJSON(v *ejson.Validator) {
@@ -109,6 +116,8 @@ func NewClient(cfg ClientCfg) (*Client, error) {
 		Log: cfg.Log,
 
 		Pool: pool,
+
+		stopChan: make(chan struct{}),
 	}
 
 	c.connectionAcquisitionTimeout =
@@ -119,6 +128,11 @@ func NewClient(cfg ClientCfg) (*Client, error) {
 			c.Close()
 			return nil, err
 		}
+	}
+
+	if cfg.InfluxClient != nil {
+		c.wg.Add(1)
+		go c.influxProbeMain()
 	}
 
 	return &c, nil
@@ -137,6 +151,9 @@ func (c *Client) updateSchemas() error {
 }
 
 func (c *Client) Close() {
+	close(c.stopChan)
+	c.wg.Wait()
+
 	c.Pool.Close()
 }
 
@@ -188,10 +205,10 @@ func (c *Client) withConn(fn func(Conn) error) error {
 	if err != nil {
 		// We would like to detect connection errors to return them clearly
 		// identified, but pgx is yet another one of those libraries hiding
-		// their error types (see https://github.com/jackc/pgx/issues/1773),
-		// making life harder for everyone. Not much we can do here, so we
-		// will get incredibly verbose error messages (including connection
-		// parameters) for each connection failure.
+		// their error types for inane reasons, making life harder for
+		// everyone. Not much we can do here, so we will get incredibly
+		// verbose error messages (including connection parameters) for each
+		// connection failure.
 
 		if errors.Is(err, context.DeadlineExceeded) {
 			err = ErrNoConnectionAvailable
@@ -206,4 +223,43 @@ func (c *Client) withConn(fn func(Conn) error) error {
 
 func TakeAdvisoryTxLock(conn Conn, id1, id2 uint32) error {
 	return Exec(conn, `SELECT pg_advisory_xact_lock($1, $2)`, id1, id2)
+}
+
+func (c *Client) influxProbeMain() {
+	defer c.wg.Done()
+
+	timer := time.NewTicker(time.Second)
+	defer timer.Stop()
+
+	for {
+		select {
+		case <-c.stopChan:
+			return
+
+		case <-timer.C:
+			c.sendInfluxPoints()
+		}
+	}
+}
+
+func (c *Client) sendInfluxPoints() {
+	now := time.Now()
+	stats := c.Pool.Stat()
+
+	tags := influx.Tags{
+		"client": c.Cfg.Name,
+	}
+
+	fields := influx.Fields{
+		"max_nb_connections":      stats.MaxConns(),
+		"nb_connections":          stats.TotalConns(),
+		"nb_idle_connections":     stats.IdleConns(),
+		"nb_acquired_connections": stats.AcquiredConns(),
+		"nb_opening_connections":  stats.ConstructingConns(),
+	}
+
+	point := influx.NewPointWithTimestamp("pg_clients", tags, fields, now)
+
+	c.Cfg.InfluxClient.EnqueuePoint(point)
+
 }
