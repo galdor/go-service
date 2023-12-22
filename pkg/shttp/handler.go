@@ -256,6 +256,31 @@ func (h *Handler) ReplyFile(filePath string) {
 	http.ServeContent(h.ResponseWriter, h.Request, filePath, modTime, body)
 }
 
+func (h *Handler) ReplyChunk(r io.Reader) error {
+	if _, err := io.Copy(h.ResponseWriter, r); err != nil {
+		err2 := fmt.Errorf("cannot write response chunk: %v", err)
+		h.Log.Error("%v", err2)
+		return err2
+	}
+
+	h.ResponseWriter.(http.Flusher).Flush()
+
+	return nil
+}
+
+func (h *Handler) ReplyJSONChunk(value interface{}) error {
+	data, err := json.Marshal(value)
+	if err != nil {
+		err2 := fmt.Errorf("cannot encode json response chunk: %v", err)
+		h.Log.Error("%v", err2)
+		return err2
+	}
+
+	data = append(data, '\n')
+
+	return h.ReplyChunk(bytes.NewReader(data))
+}
+
 func rewriteAssetPath(path string) string {
 	matches := assetCacheBustingRE.FindAllStringSubmatch(path, -1)
 	if len(matches) < 1 {
