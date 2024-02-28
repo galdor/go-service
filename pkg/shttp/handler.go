@@ -92,15 +92,21 @@ func (h *Handler) RequestData() ([]byte, error) {
 }
 
 func (h *Handler) JSONRequestData(dest interface{}) error {
-	return h.JSONRequestData2(dest, nil)
-}
-
-func (h *Handler) JSONRequestData2(dest interface{}, fn func(*ejson.Validator)) error {
 	data, err := h.RequestData()
 	if err != nil {
 		return err
 	}
 
+	return h.JSONRequestDataExt(data, dest, nil)
+}
+
+// The extended version of JSONRequestData is useful in specific situations:
+//
+// 1. JSON data must be extracted and/or transformed from the request body
+// before decoding.
+//
+// 2. Extra validation steps must be performed with the same Validator object.
+func (h *Handler) JSONRequestDataExt(data []byte, dest interface{}, fn func(*ejson.Validator)) error {
 	if err := json.Unmarshal(data, dest); err != nil {
 		h.ReplyError(400, "invalid_request_body",
 			"invalid request body: %v", err)
