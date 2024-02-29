@@ -49,12 +49,16 @@ func (c *APIClient) SendRequest(method, uriRefString string, reqBody, resBody in
 
 	var reqBodyReader io.Reader
 	if reqBody != nil {
-		data, err := json.Marshal(reqBody)
-		if err != nil {
-			return nil, fmt.Errorf("cannot encode request body: %w", err)
-		}
+		if r, ok := reqBody.(io.Reader); ok {
+			reqBodyReader = r
+		} else {
+			data, err := json.Marshal(reqBody)
+			if err != nil {
+				return nil, fmt.Errorf("cannot encode request body: %w", err)
+			}
 
-		reqBodyReader = bytes.NewReader(data)
+			reqBodyReader = bytes.NewReader(data)
+		}
 	}
 
 	req, err := http.NewRequest(method, uri.String(), reqBodyReader)
