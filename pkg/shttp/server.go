@@ -122,7 +122,7 @@ func NewServer(cfg ServerCfg) (*Server, error) {
 	}
 
 	s.mux = http.NewServeMux()
-	s.mux.Handle("/", &NotFoundHandler{Server: s})
+	s.mux.HandleFunc("/", s.hNotFound)
 
 	return s, nil
 }
@@ -288,26 +288,11 @@ func AdaptativeErrorHandler(h *Handler, status int, code string, msg string, dat
 	handler(h, status, code, msg, data)
 }
 
-type NotFoundHandler struct {
-	Server *Server
-}
-
-func (s *NotFoundHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+func (s *Server) hNotFound(w http.ResponseWriter, req *http.Request) {
 	h := requestHandler(req)
-	s.Server.finalizeHandler(h, req, "", req.Method, nil)
+	s.finalizeHandler(h, req, "", req.Method, nil)
 
 	h.ReplyError(404, "not_found", "http route not found")
-}
-
-type MethodNotAllowedHandler struct {
-	Server *Server
-}
-
-func (s *MethodNotAllowedHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	h := requestHandler(req)
-	s.Server.finalizeHandler(h, req, "", req.Method, nil)
-
-	h.ReplyError(405, "method_not_allowed", "http method not allowed")
 }
 
 func requestHandler(req *http.Request) *Handler {
