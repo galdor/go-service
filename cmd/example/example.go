@@ -62,7 +62,7 @@ func (e *Example) initAPIHTTPRoutes() {
 	s := e.Service.HTTPServer("api")
 
 	s.Route("/ping", "GET", e.hAPIPingGET)
-	s.Route("/hello/:name", "GET", e.hAPIHelloNameGET)
+	s.Route("/hello/{name}", "GET", e.hAPIHelloNameGET)
 	s.Route("/error/internal", "GET", e.hErrorInternalGET)
 	s.Route("/error/panic", "GET", e.hErrorPanicGET)
 }
