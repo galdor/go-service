@@ -206,26 +206,22 @@ func (s *Server) Route(pathPattern, method string, routeFunc RouteFunc) {
 
 	pattern := pathPattern
 
-	// With the standard muxer, /foo/bar actually matches any subpath of
-	// /foo/bar. We want to preserve the previous strict behaviour by default,
-	// hence the "{$}" suffix. Of course if the last segment is a trailing
-	// wildcard we want to keep it that way.
-
-	isPrefixPath := strings.HasSuffix(pattern, "...}") ||
-		strings.HasSuffix(pattern, "/")
-
-	if !isPrefixPath && pattern != "/" {
-		if !strings.HasSuffix(pattern, "/") {
-			pattern += "/"
-		}
-		pattern += "{$}"
-	}
-
 	if method != "" {
 		pattern = method + " " + pattern
 	}
 
 	s.mux.HandleFunc(pattern, handlerFunc)
+
+	// We usually want /foo and /foo/ to be handled the same way, so we have to
+	// register both variants.
+
+	hasSuffix := func(s string) bool {
+		return strings.HasSuffix(pattern, s)
+	}
+
+	if !hasSuffix("/") && !hasSuffix("{$}") && !hasSuffix("...}") {
+		s.mux.HandleFunc(pattern+"/{$}", handlerFunc)
+	}
 }
 
 func (s *Server) handlePanic(w http.ResponseWriter, req *http.Request, data interface{}) {
