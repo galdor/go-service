@@ -32,9 +32,6 @@ func NewServiceAPI(cfg ServiceAPICfg) *ServiceAPI {
 	httpServerName := cfg.HTTPServer
 	httpServer := cfg.Service.HTTPServer(httpServerName)
 
-	// The pprof module breaks if we redirect /debug/pprof/ to /debug/pprof.
-	httpServer.Cfg.DisableTrailingSlashHandling = true
-
 	return &ServiceAPI{
 		Cfg:     cfg,
 		Service: cfg.Service,

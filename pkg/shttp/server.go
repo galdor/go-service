@@ -14,7 +14,6 @@ import (
 	"github.com/galdor/go-log"
 	"github.com/galdor/go-service/pkg/influx"
 	"github.com/galdor/go-service/pkg/utils"
-	"github.com/julienschmidt/httprouter"
 )
 
 type contextKey struct{}
@@ -40,10 +39,9 @@ type ServerCfg struct {
 
 	TLS *TLSServerCfg `json:"tls"`
 
-	LogSuccessfulRequests        bool `json:"log_successful_requests"`
-	HideInternalErrors           bool `json:"hide_internal_errors"`
-	DisableTrailingSlashHandling bool `json:"disable_trailing_slash_handling"`
-	MethodLessRouteIds           bool `json:"method_less_route_ids"`
+	LogSuccessfulRequests bool `json:"log_successful_requests"`
+	HideInternalErrors    bool `json:"hide_internal_errors"`
+	MethodLessRouteIds    bool `json:"method_less_route_ids"`
 }
 
 type TLSServerCfg struct {
@@ -56,7 +54,7 @@ type Server struct {
 	Log *log.Logger
 
 	server *http.Server
-	router *httprouter.Router
+	mux    *http.ServeMux
 
 	errorHandler ErrorHandler
 
@@ -123,15 +121,8 @@ func NewServer(cfg ServerCfg) (*Server, error) {
 		}
 	}
 
-	s.router = httprouter.New()
-
-	s.router.NotFound = &NotFoundHandler{Server: s}
-	s.router.MethodNotAllowed = &MethodNotAllowedHandler{Server: s}
-	s.router.HandleMethodNotAllowed = true
-	s.router.HandleOPTIONS = true
-	s.router.PanicHandler = s.handlePanic
-	s.router.RedirectFixedPath = true
-	s.router.RedirectTrailingSlash = !s.Cfg.DisableTrailingSlashHandling
+	s.mux = http.NewServeMux()
+	s.mux.Handle("/", &NotFoundHandler{Server: s})
 
 	return s, nil
 }
@@ -202,23 +193,41 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	defer h.sendInfluxPoints()
 	defer h.logRequest()
 
-	s.router.ServeHTTP(h.ResponseWriter, h.Request)
+	s.mux.ServeHTTP(h.ResponseWriter, h.Request)
 }
 
 func (s *Server) Route(pathPattern, method string, routeFunc RouteFunc) {
-	handlerFunc := func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
+	handlerFunc := func(w http.ResponseWriter, req *http.Request) {
 		h := requestHandler(req)
-		s.finalizeHandler(h, req, pathPattern, method, routeFunc, params)
+		s.finalizeHandler(h, req, pathPattern, method, routeFunc)
 
 		routeFunc(h)
 	}
 
-	s.router.Handle(method, pathPattern, handlerFunc)
+	pattern := pathPattern
+
+	// With the standard muxer, /foo/bar actually matches any subpath of
+	// /foo/bar. We want to preserve the previous strict behaviour by default,
+	// hence the "{$}" suffix. Of course if the last segment is a trailing
+	// wildcard we want to keep it that way.
+
+	if !strings.HasSuffix(pattern, "...}") {
+		if !strings.HasSuffix(pattern, "/") {
+			pattern += "/"
+		}
+		pattern += "{$}"
+	}
+
+	if method != "" {
+		pattern = method + " " + pattern
+	}
+
+	s.mux.HandleFunc(pattern, handlerFunc)
 }
 
 func (s *Server) handlePanic(w http.ResponseWriter, req *http.Request, data interface{}) {
 	h := requestHandler(req)
-	s.finalizeHandler(h, req, "", req.Method, nil, nil)
+	s.finalizeHandler(h, req, "", req.Method, nil)
 
 	msg := utils.RecoverValueString(data)
 	trace := utils.StackTrace(0, 20, true)
@@ -226,8 +235,8 @@ func (s *Server) handlePanic(w http.ResponseWriter, req *http.Request, data inte
 	h.ReplyInternalError(500, "panic: "+msg+"\n"+trace)
 }
 
-func (s *Server) finalizeHandler(h *Handler, req *http.Request, pathPattern, method string, routeFunc RouteFunc, params httprouter.Params) {
-	h.Request = req // the request may have been modified by the router
+func (s *Server) finalizeHandler(h *Handler, req *http.Request, pathPattern, method string, routeFunc RouteFunc) {
+	h.Request = req // the request may have been modified by the muxer
 	h.Query = req.URL.Query()
 
 	h.Method = method
@@ -236,11 +245,6 @@ func (s *Server) finalizeHandler(h *Handler, req *http.Request, pathPattern, met
 
 	h.ClientAddress = requestClientAddress(req)
 	h.RequestId = requestId(req)
-
-	h.pathVariables = make(map[string]string)
-	for _, p := range params {
-		h.pathVariables[p.Key] = p.Value
-	}
 }
 
 func (s *Server) RouteId(method, pathPattern string) string {
@@ -291,7 +295,7 @@ type NotFoundHandler struct {
 
 func (s *NotFoundHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	h := requestHandler(req)
-	s.Server.finalizeHandler(h, req, "", req.Method, nil, nil)
+	s.Server.finalizeHandler(h, req, "", req.Method, nil)
 
 	h.ReplyError(404, "not_found", "http route not found")
 }
@@ -302,7 +306,7 @@ type MethodNotAllowedHandler struct {
 
 func (s *MethodNotAllowedHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	h := requestHandler(req)
-	s.Server.finalizeHandler(h, req, "", req.Method, nil, nil)
+	s.Server.finalizeHandler(h, req, "", req.Method, nil)
 
 	h.ReplyError(405, "method_not_allowed", "http method not allowed")
 }

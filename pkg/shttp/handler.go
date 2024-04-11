@@ -41,14 +41,13 @@ type Handler struct {
 	ClientAddress string // optional
 	RequestId     string // optional
 
-	start         time.Time
-	pathVariables map[string]string
-	errorCode     string
+	start     time.Time
+	errorCode string
 }
 
 func (h *Handler) PathVariable(name string) string {
-	value, found := h.pathVariables[name]
-	if !found {
+	value := h.Request.PathValue(name)
+	if value == "" {
 		utils.Panicf("unknown path variable %q", name)
 	}
 
