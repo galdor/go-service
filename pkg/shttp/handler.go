@@ -314,7 +314,7 @@ func (h *Handler) logRequest() {
 	}
 
 	if h.PathPattern != "" {
-		data["route"] = h.PathPattern
+		data["route"] = h.RouteId
 	}
 
 	if h.ClientAddress != "" {
