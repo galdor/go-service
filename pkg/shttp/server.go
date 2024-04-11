@@ -211,7 +211,10 @@ func (s *Server) Route(pathPattern, method string, routeFunc RouteFunc) {
 	// hence the "{$}" suffix. Of course if the last segment is a trailing
 	// wildcard we want to keep it that way.
 
-	if !strings.HasSuffix(pattern, "...}") {
+	isPrefixPath := strings.HasSuffix(pattern, "...}") ||
+		strings.HasSuffix(pattern, "/")
+
+	if !isPrefixPath && pattern != "/" {
 		if !strings.HasSuffix(pattern, "/") {
 			pattern += "/"
 		}
