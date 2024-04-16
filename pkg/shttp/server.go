@@ -201,6 +201,15 @@ func (s *Server) Route(pathPattern, method string, routeFunc RouteFunc) {
 		h := requestHandler(req)
 		s.finalizeHandler(h, req, pathPattern, method, routeFunc)
 
+		defer func() {
+			if v := recover(); v != nil {
+				msg := utils.RecoverValueString(v)
+				trace := utils.StackTrace(2, 20, true)
+
+				h.ReplyInternalError(500, "panic: "+msg+"\n"+trace)
+			}
+		}()
+
 		routeFunc(h)
 	}
 
@@ -222,16 +231,6 @@ func (s *Server) Route(pathPattern, method string, routeFunc RouteFunc) {
 	if !hasSuffix("/") && !hasSuffix("{$}") && !hasSuffix("...}") {
 		s.mux.HandleFunc(pattern+"/{$}", handlerFunc)
 	}
-}
-
-func (s *Server) handlePanic(w http.ResponseWriter, req *http.Request, data interface{}) {
-	h := requestHandler(req)
-	s.finalizeHandler(h, req, "", req.Method, nil)
-
-	msg := utils.RecoverValueString(data)
-	trace := utils.StackTrace(0, 20, true)
-
-	h.ReplyInternalError(500, "panic: "+msg+"\n"+trace)
 }
 
 func (s *Server) finalizeHandler(h *Handler, req *http.Request, pathPattern, method string, routeFunc RouteFunc) {
