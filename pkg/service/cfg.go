@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 	"text/template"
 
 	"github.com/galdor/go-ejson"
@@ -20,6 +21,10 @@ var cfgTemplateFuncs = map[string]interface{}{
 	"quote": func(s string) string {
 		data, _ := json.Marshal(s)
 		return string(data)
+	},
+
+	"split": func(sep, s string) []string {
+		return strings.Split(s, sep)
 	},
 }
 
