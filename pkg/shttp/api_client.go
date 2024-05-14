@@ -87,6 +87,10 @@ func (c *APIClient) SendRequest(method, uriRefString string, reqBody, resBody in
 		return res, fmt.Errorf("cannot read response body: %w", err)
 	}
 
+	// We want the caller to be able to decode the response body again if
+	// necessary.
+	res.Body = io.NopCloser(bytes.NewBuffer(resBodyData))
+
 	if status < 200 || status >= 400 {
 		var baseError error
 
