@@ -26,7 +26,8 @@ type ClientCfg struct {
 	ConnectionTimeout *int `json:"connection_timeout"` // seconds
 	RequestTimeout    *int `json:"request_timeout"`    // seconds
 
-	LogRequests bool `json:"log_requests"`
+	LogRequests         bool `json:"log_requests"`
+	DisableRedirections bool `json:"disable_redirections"`
 
 	TLS *TLSClientCfg `json:"tls"`
 
@@ -86,6 +87,13 @@ func NewClient(cfg ClientCfg) (*Client, error) {
 	client := &http.Client{
 		Timeout:   time.Duration(*cfg.RequestTimeout) * time.Second,
 		Transport: NewRoundTripper(transport, &cfg),
+	}
+
+	if cfg.DisableRedirections {
+		client.CheckRedirect =
+			func(req *http.Request, via []*http.Request) error {
+				return http.ErrUseLastResponse
+			}
 	}
 
 	c := &Client{
