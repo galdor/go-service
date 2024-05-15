@@ -18,8 +18,10 @@ type APIClientCfg struct {
 type APIClient struct {
 	Client *http.Client
 
-	BearerToken string
-	Cookie      *http.Cookie
+	BasicUsername string
+	BasicPassword string
+	BearerToken   string
+	Cookie        *http.Cookie
 
 	baseURI *url.URL
 }
@@ -64,6 +66,10 @@ func (c *APIClient) SendRequest(method, uriRefString string, reqBody, resBody in
 	req, err := http.NewRequest(method, uri.String(), reqBodyReader)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create request: %w", err)
+	}
+
+	if c.BasicUsername != "" {
+		req.SetBasicAuth(c.BasicUsername, c.BasicPassword)
 	}
 
 	if c.BearerToken != "" {
