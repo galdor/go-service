@@ -41,7 +41,11 @@ func NewAPIClient(cfg APIClientCfg) (*APIClient, error) {
 	return &c, nil
 }
 
-func (c *APIClient) SendRequest(method, uriRefString string, reqBody, resBody interface{}) (*http.Response, error) {
+func (c *APIClient) SendRequest(method, uriRefString string, reqBody, resBody any) (*http.Response, error) {
+	return c.SendRequestWithHeader(method, uriRefString, nil, reqBody, resBody)
+}
+
+func (c *APIClient) SendRequestWithHeader(method, uriRefString string, header http.Header, reqBody, resBody any) (*http.Response, error) {
 	uriRef, err := url.Parse(uriRefString)
 	if err != nil {
 		return nil, fmt.Errorf("invalid uri reference: %w", err)
@@ -66,6 +70,12 @@ func (c *APIClient) SendRequest(method, uriRefString string, reqBody, resBody in
 	req, err := http.NewRequest(method, uri.String(), reqBodyReader)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create request: %w", err)
+	}
+
+	for name, values := range header {
+		for _, value := range values {
+			req.Header.Add(name, value)
+		}
 	}
 
 	if c.BasicUsername != "" {
