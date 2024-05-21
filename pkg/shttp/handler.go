@@ -130,6 +130,18 @@ func (h *Handler) JSONRequestDataExt(data []byte, dest interface{}, fn func(*ejs
 	return nil
 }
 
+func (h *Handler) AcceptedMediaRanges() MediaRanges {
+	accept := h.Request.Header.Get("Accept")
+	if accept == "" {
+		return nil
+	}
+
+	var mrs MediaRanges
+	mrs.Parse(accept)
+
+	return mrs
+}
+
 func (h *Handler) SetCookie(cookie *http.Cookie) {
 	header := h.ResponseWriter.Header()
 	header.Set("Set-Cookie", cookie.String())
