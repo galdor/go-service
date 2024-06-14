@@ -54,6 +54,19 @@ func (h *Handler) PathVariable(name string) string {
 	return value
 }
 
+func (h *Handler) UUIDPathVariable(name string) (uuid.UUID, error) {
+	s := h.PathVariable(name)
+
+	var id uuid.UUID
+	if err := id.Parse(s); err != nil {
+		err := fmt.Errorf("invalid path segment %q: %w", s, err)
+		h.ReplyError(400, "invalid_path_segment", "%v", err)
+		return uuid.Nil, err
+	}
+
+	return id, nil
+}
+
 func (h *Handler) HasQueryParameter(name string) bool {
 	return h.Query.Has(name)
 }
