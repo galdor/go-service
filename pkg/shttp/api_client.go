@@ -10,12 +10,16 @@ import (
 	"net/url"
 )
 
+type APIClientErrorHandler func(*http.Response, []byte) error
+
 type APIClientCfg struct {
-	Client  *http.Client `json:"-"`
-	BaseURI string       `json:"base_uri"`
+	Client      *http.Client          `json:"-"`
+	HandleError APIClientErrorHandler `json:"-"`
+	BaseURI     string                `json:"base_uri"`
 }
 
 type APIClient struct {
+	Cfg    APIClientCfg
 	Client *http.Client
 
 	BasicUsername string
@@ -27,14 +31,17 @@ type APIClient struct {
 }
 
 func NewAPIClient(cfg APIClientCfg) (*APIClient, error) {
+	if cfg.HandleError == nil {
+		cfg.HandleError = HandleAPIClientError
+	}
+
 	baseURI, err := url.Parse(cfg.BaseURI)
 	if err != nil {
 		return nil, fmt.Errorf("invalid base uri: %w", err)
 	}
 
 	c := APIClient{
-		Client: cfg.Client,
-
+		Cfg:     cfg,
 		baseURI: baseURI,
 	}
 
@@ -90,13 +97,11 @@ func (c *APIClient) SendRequestWithHeader(method, uriRefString string, header ht
 		req.Header.Add("Cookie", c.Cookie.String())
 	}
 
-	res, err := c.Client.Do(req)
+	res, err := c.Cfg.Client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("cannot send request: %w", err)
 	}
 	defer res.Body.Close()
-
-	status := res.StatusCode
 
 	resBodyData, err := io.ReadAll(res.Body)
 	if err != nil {
@@ -107,18 +112,8 @@ func (c *APIClient) SendRequestWithHeader(method, uriRefString string, header ht
 	// necessary.
 	res.Body = io.NopCloser(bytes.NewBuffer(resBodyData))
 
-	if status < 200 || status >= 400 {
-		var baseError error
-
-		var apiError JSONError
-		if err := json.Unmarshal(resBodyData, &apiError); err == nil {
-			baseError = &apiError
-		} else {
-			baseError = errors.New(string(resBodyData))
-		}
-
-		return res, fmt.Errorf("request failed with status %d: %w",
-			res.StatusCode, baseError)
+	if err := c.Cfg.HandleError(res, resBodyData); err != nil {
+		return res, err
 	}
 
 	if resBody != nil {
@@ -128,4 +123,22 @@ func (c *APIClient) SendRequestWithHeader(method, uriRefString string, header ht
 	}
 
 	return res, nil
+}
+
+func HandleAPIClientError(res *http.Response, body []byte) error {
+	if status := res.StatusCode; status >= 200 && status < 400 {
+		return nil
+	}
+
+	var baseError error
+
+	var apiError JSONError
+	if err := json.Unmarshal(body, &apiError); err == nil {
+		baseError = &apiError
+	} else {
+		baseError = errors.New(string(body))
+	}
+
+	return fmt.Errorf("request failed with status %d: %w",
+		res.StatusCode, baseError)
 }
