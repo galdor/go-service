@@ -206,7 +206,7 @@ func (s *Server) Route(pathPattern, method string, routeFunc RouteFunc) {
 				msg := utils.RecoverValueString(v)
 				trace := utils.StackTrace(2, 20, true)
 
-				h.ReplyInternalError(500, "panic: "+msg+"\n"+trace)
+				h.ReplyInternalError(500, "panic: %s\n%s", msg, trace)
 			}
 		}()
 
