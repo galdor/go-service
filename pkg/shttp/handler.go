@@ -16,11 +16,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/galdor/go-ejson"
-	"github.com/galdor/go-log"
-	"github.com/galdor/go-service/pkg/influx"
-	"github.com/galdor/go-service/pkg/utils"
-	"github.com/galdor/go-uuid"
+	"go.n16f.net/ejson"
+	"go.n16f.net/log"
+	"go.n16f.net/service/pkg/influx"
+	"go.n16f.net/service/pkg/utils"
+	"go.n16f.net/uuid"
 )
 
 var assetCacheBustingRE = regexp.MustCompile(

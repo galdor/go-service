@@ -11,7 +11,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/galdor/go-ejson"
+	"go.n16f.net/ejson"
 	"gopkg.in/yaml.v3"
 )
 

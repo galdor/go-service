@@ -5,8 +5,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/galdor/go-log"
-	"github.com/galdor/go-service/pkg/utils"
+	"go.n16f.net/log"
+	"go.n16f.net/service/pkg/utils"
 )
 
 type WorkerFunc func(*Worker) (time.Duration, error)

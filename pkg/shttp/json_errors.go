@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/galdor/go-ejson"
+	"go.n16f.net/ejson"
 )
 
 // JSONError is the error structure used by all web and API HTTP servers. It

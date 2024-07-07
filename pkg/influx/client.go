@@ -10,8 +10,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/galdor/go-ejson"
-	"github.com/galdor/go-log"
+	"go.n16f.net/ejson"
+	"go.n16f.net/log"
 )
 
 type ClientCfg struct {

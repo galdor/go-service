@@ -10,13 +10,13 @@ import (
 	"syscall"
 	texttemplate "text/template"
 
-	"github.com/galdor/go-ejson"
-	"github.com/galdor/go-log"
-	"github.com/galdor/go-program"
-	"github.com/galdor/go-service/pkg/influx"
-	"github.com/galdor/go-service/pkg/pg"
-	"github.com/galdor/go-service/pkg/shttp"
-	"github.com/galdor/go-service/pkg/utils"
+	"go.n16f.net/ejson"
+	"go.n16f.net/log"
+	"go.n16f.net/program"
+	"go.n16f.net/service/pkg/influx"
+	"go.n16f.net/service/pkg/pg"
+	"go.n16f.net/service/pkg/shttp"
+	"go.n16f.net/service/pkg/utils"
 )
 
 type ServiceImplementation interface {

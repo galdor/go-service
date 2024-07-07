@@ -10,8 +10,8 @@ import (
 	"strings"
 	texttemplate "text/template"
 
-	"github.com/galdor/go-service/pkg/text"
-	"github.com/galdor/go-service/pkg/utils"
+	"go.n16f.net/service/pkg/text"
+	"go.n16f.net/service/pkg/utils"
 )
 
 var builtinTemplateFunctions = map[string]interface{}{

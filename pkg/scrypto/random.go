@@ -3,7 +3,7 @@ package scrypto
 import (
 	"crypto/rand"
 
-	"github.com/galdor/go-service/pkg/utils"
+	"go.n16f.net/service/pkg/utils"
 )
 
 func RandomBytes(n int) []byte {

@@ -1,7 +1,7 @@
 package test
 
 import (
-	"github.com/galdor/go-uuid"
+	"go.n16f.net/uuid"
 )
 
 func RandomName(prefix, suffix string) string {

@@ -10,9 +10,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/galdor/go-ejson"
-	"github.com/galdor/go-log"
-	"github.com/galdor/go-service/pkg/utils"
+	"go.n16f.net/ejson"
+	"go.n16f.net/log"
+	"go.n16f.net/service/pkg/utils"
 )
 
 const (
