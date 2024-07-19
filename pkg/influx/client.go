@@ -158,6 +158,17 @@ func (c *Client) EnqueuePoints(points Points) {
 	}
 }
 
+func (c *Client) SendPoints(points Points) error {
+	// Most of the time, it is more important to avoid blocking the service than
+	// to guarantee metric delivery. In some specific situations, the job of the
+	// service is to produce metrics, and it is absolutely fine to wait until we
+	// have made sure that they have been successfully sent to Influx. In these
+	// situations, we want the ability to send points directly instead of
+	// queuing them.
+
+	return c.sendPoints(points)
+}
+
 func (c *Client) enqueuePoints(points Points) {
 	for _, p := range points {
 		c.finalizePoint(p)
@@ -202,6 +213,9 @@ func (c *Client) flush() {
 }
 
 func (c *Client) sendPoints(points Points) error {
+	// Remember that the function can be called from another goroutine through
+	// SendPoints.
+
 	uri := *c.uri
 	uri.Path = path.Join(uri.Path, "/api/v2/write")
 
