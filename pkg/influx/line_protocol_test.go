@@ -31,9 +31,9 @@ func TestEncodePoint(t *testing.T) {
 		{NewPoint(" m, 6 ", Tags{", =": `""`}, Fields{"=": `"a"`}),
 			`\ m\,\ 6\ ,\,\ \=="" \=="\"a\""`},
 		{NewPoint("m7", Tags{"a": "", "b": " foo "}, Fields{"c": 1}),
-			`m7,b=\ foo\ c=1`},
+			`m7,b=\ foo\  c=1i`},
 		{NewPoint("m8", Tags{"a": `b=c,d=e`}, Fields{"b": 1}),
-			`m8,a=b\=c\,d\=e b=1`},
+			`m8,a=b\=c\,d\=e b=1i`},
 	}
 
 	for _, test := range tests {
