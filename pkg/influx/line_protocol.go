@@ -21,7 +21,11 @@ func init() {
 	stringFieldReplacer = strings.NewReplacer(`"`, `\"`)
 }
 
-func EncodePoint(p *Point, buf *bytes.Buffer) {
+func EncodePoint(p *Point, buf *bytes.Buffer) error {
+	if len(p.Fields) == 0 {
+		return fmt.Errorf("points must contain at least one field")
+	}
+
 	encodeMeasurement(p.Measurement, buf)
 	if len(p.Tags) > 0 {
 		encodeTags(p.Tags, buf)
@@ -34,13 +38,20 @@ func EncodePoint(p *Point, buf *bytes.Buffer) {
 		buf.WriteByte(' ')
 		encodeTimestamp(p.Timestamp, buf)
 	}
+
+	return nil
 }
 
-func EncodePoints(ps Points, buf *bytes.Buffer) {
+func EncodePoints(ps Points, buf *bytes.Buffer) error {
 	for _, p := range ps {
-		EncodePoint(p, buf)
+		if err := EncodePoint(p, buf); err != nil {
+			return err
+		}
+
 		buf.WriteByte('\n')
 	}
+
+	return nil
 }
 
 func encodeMeasurement(measurement string, buf *bytes.Buffer) {
@@ -54,11 +65,13 @@ func encodeTags(tags Tags, buf *bytes.Buffer) {
 	// the database. The sort should match the results from the Go
 	// bytes.Compare function.
 
-	keys := make([]string, len(tags))
-	i := 0
-	for key := range tags {
-		keys[i] = key
-		i++
+	var keys []string
+
+	for key, value := range tags {
+		// "Tag values cannot be empty; instead, omit the tag from the tag set"
+		if value != "" {
+			keys = append(keys, key)
+		}
 	}
 
 	sort.Strings(keys)

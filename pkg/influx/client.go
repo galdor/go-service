@@ -228,7 +228,9 @@ func (c *Client) sendPoints(points Points) error {
 	uri.RawQuery = query.Encode()
 
 	var buf bytes.Buffer
-	EncodePoints(points, &buf)
+	if err := EncodePoints(points, &buf); err != nil {
+		return fmt.Errorf("cannot encode points: %w", err)
+	}
 
 	req, err := http.NewRequest("POST", uri.String(), &buf)
 	if err != nil {

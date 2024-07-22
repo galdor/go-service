@@ -30,6 +30,10 @@ func TestEncodePoint(t *testing.T) {
 			`m5 a=1i ` + strconv.FormatInt(timestamp.UnixNano(), 10)},
 		{NewPoint(" m, 6 ", Tags{", =": `""`}, Fields{"=": `"a"`}),
 			`\ m\,\ 6\ ,\,\ \=="" \=="\"a\""`},
+		{NewPoint("m7", Tags{"a": "", "b": " foo "}, Fields{"c": 1}),
+			`m7,b=\ foo\ c=1`},
+		{NewPoint("m8", Tags{"a": `b=c,d=e`}, Fields{"b": 1}),
+			`m8,a=b\=c\,d\=e b=1`},
 	}
 
 	for _, test := range tests {
