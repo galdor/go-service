@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"go.n16f.net/log"
-	"go.n16f.net/service/pkg/utils"
+	"go.n16f.net/program"
 )
 
 type WorkerFunc func(*Worker) (time.Duration, error)
@@ -72,8 +72,8 @@ func (w *Worker) main() {
 			func() {
 				defer func() {
 					if v := recover(); v != nil {
-						msg := utils.RecoverValueString(v)
-						trace := utils.StackTrace(0, 20, true)
+						msg := program.RecoverValueString(v)
+						trace := program.StackTrace(0, 20, true)
 
 						w.Log.Error("panic: %s\n%s", msg, trace)
 					}

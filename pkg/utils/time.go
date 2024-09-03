@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"math"
 	"time"
+
+	"go.n16f.net/program"
 )
 
 func UseUTCTimezone() {
 	location, err := time.LoadLocation("UTC")
 	if err != nil {
-		Panicf("cannot load UTC location: %v", err)
+		program.Panicf("cannot load UTC location: %v", err)
 	}
 
 	time.Local = location

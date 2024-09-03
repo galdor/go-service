@@ -519,8 +519,8 @@ func Run(name, description string, implementation ServiceImplementation) {
 
 	defer func() {
 		if v := recover(); v != nil {
-			msg := utils.RecoverValueString(v)
-			trace := utils.StackTrace(0, 20, true)
+			msg := program.RecoverValueString(v)
+			trace := program.StackTrace(0, 20, true)
 
 			if s.Log == nil {
 				p.Error("panic: %s\n%s", msg, trace)
@@ -609,7 +609,7 @@ func (s *Service) ErrorChan() chan<- error {
 func (s *Service) HTTPClient(name string) *shttp.Client {
 	client, found := s.HTTPClients[name]
 	if !found {
-		utils.Panicf("unknown http client %q", name)
+		program.Panicf("unknown http client %q", name)
 	}
 
 	return client
@@ -618,7 +618,7 @@ func (s *Service) HTTPClient(name string) *shttp.Client {
 func (s *Service) HTTPServer(name string) *shttp.Server {
 	server, found := s.HTTPServers[name]
 	if !found {
-		utils.Panicf("unknown http server %q", name)
+		program.Panicf("unknown http server %q", name)
 	}
 
 	return server
@@ -627,7 +627,7 @@ func (s *Service) HTTPServer(name string) *shttp.Server {
 func (s *Service) PgClient(name string) *pg.Client {
 	client, found := s.PgClients[name]
 	if !found {
-		utils.Panicf("unknown pg client %q", name)
+		program.Panicf("unknown pg client %q", name)
 	}
 
 	return client
@@ -636,7 +636,7 @@ func (s *Service) PgClient(name string) *pg.Client {
 func (s *Service) Worker(name string) *Worker {
 	worker, found := s.Workers[name]
 	if !found {
-		utils.Panicf("unknown worker %q", name)
+		program.Panicf("unknown worker %q", name)
 	}
 
 	return worker

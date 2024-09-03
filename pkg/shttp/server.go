@@ -12,8 +12,8 @@ import (
 
 	"go.n16f.net/ejson"
 	"go.n16f.net/log"
+	"go.n16f.net/program"
 	"go.n16f.net/service/pkg/influx"
-	"go.n16f.net/service/pkg/utils"
 )
 
 type contextKey struct{}
@@ -203,8 +203,8 @@ func (s *Server) Route(pathPattern, method string, routeFunc RouteFunc) {
 
 		defer func() {
 			if v := recover(); v != nil {
-				msg := utils.RecoverValueString(v)
-				trace := utils.StackTrace(2, 20, true)
+				msg := program.RecoverValueString(v)
+				trace := program.StackTrace(2, 20, true)
 
 				h.ReplyInternalError(500, "panic: %s\n%s", msg, trace)
 			}

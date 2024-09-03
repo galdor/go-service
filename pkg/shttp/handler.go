@@ -18,6 +18,7 @@ import (
 
 	"go.n16f.net/ejson"
 	"go.n16f.net/log"
+	"go.n16f.net/program"
 	"go.n16f.net/service/pkg/influx"
 	"go.n16f.net/service/pkg/utils"
 	"go.n16f.net/uuid"
@@ -48,7 +49,7 @@ type Handler struct {
 func (h *Handler) PathVariable(name string) string {
 	value := h.Request.PathValue(name)
 	if value == "" {
-		utils.Panicf("unknown path variable %q", name)
+		program.Panicf("unknown path variable %q", name)
 	}
 
 	return value
