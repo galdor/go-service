@@ -18,6 +18,6 @@ jobs:
       - name: "Run analysis tools"
         run: "make check"
       - name: "Run docker-compose"
-        run: "docker-compose up --quiet-pull -d"
+        run: "docker compose up --quiet-pull -d"
       - name: "Run tests"
         run: "make test"
