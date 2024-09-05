@@ -11,7 +11,7 @@ import (
 func UseUTCTimezone() {
 	location, err := time.LoadLocation("UTC")
 	if err != nil {
-		program.Panicf("cannot load UTC location: %v", err)
+		program.Panic("cannot load UTC location: %v", err)
 	}
 
 	time.Local = location

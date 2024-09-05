@@ -49,7 +49,7 @@ type Handler struct {
 func (h *Handler) PathVariable(name string) string {
 	value := h.Request.PathValue(name)
 	if value == "" {
-		program.Panicf("unknown path variable %q", name)
+		program.Panic("unknown path variable %q", name)
 	}
 
 	return value

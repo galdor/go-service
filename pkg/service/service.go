@@ -16,7 +16,6 @@ import (
 	"go.n16f.net/service/pkg/influx"
 	"go.n16f.net/service/pkg/pg"
 	"go.n16f.net/service/pkg/shttp"
-	"go.n16f.net/service/pkg/utils"
 )
 
 type ServiceImplementation interface {
@@ -562,11 +561,11 @@ func RunTest(name string, implementation ServiceImplementation, cfgPath string, 
 
 	if cfgPath != "" {
 		if err := LoadCfg(cfgPath, nil, cfg); err != nil {
-			utils.Abort("cannot load configuration: %v", err)
+			program.Abort("cannot load configuration: %v", err)
 		}
 
 		if err := implementation.ValidateCfg(); err != nil {
-			utils.Abort("invalid configuration: %v", err)
+			program.Abort("invalid configuration: %v", err)
 		}
 	}
 
@@ -578,11 +577,11 @@ func RunTest(name string, implementation ServiceImplementation, cfgPath string, 
 	s := newService(serviceCfg, implementation)
 
 	if err := s.init(); err != nil {
-		utils.Abort("cannot initialize service: %v", err)
+		program.Abort("cannot initialize service: %v", err)
 	}
 
 	if err := s.start(); err != nil {
-		utils.Abort("cannot start service: %v", err)
+		program.Abort("cannot start service: %v", err)
 	}
 
 	close(readyChan)
@@ -609,7 +608,7 @@ func (s *Service) ErrorChan() chan<- error {
 func (s *Service) HTTPClient(name string) *shttp.Client {
 	client, found := s.HTTPClients[name]
 	if !found {
-		program.Panicf("unknown http client %q", name)
+		program.Panic("unknown http client %q", name)
 	}
 
 	return client
@@ -618,7 +617,7 @@ func (s *Service) HTTPClient(name string) *shttp.Client {
 func (s *Service) HTTPServer(name string) *shttp.Server {
 	server, found := s.HTTPServers[name]
 	if !found {
-		program.Panicf("unknown http server %q", name)
+		program.Panic("unknown http server %q", name)
 	}
 
 	return server
@@ -627,7 +626,7 @@ func (s *Service) HTTPServer(name string) *shttp.Server {
 func (s *Service) PgClient(name string) *pg.Client {
 	client, found := s.PgClients[name]
 	if !found {
-		program.Panicf("unknown pg client %q", name)
+		program.Panic("unknown pg client %q", name)
 	}
 
 	return client
@@ -636,7 +635,7 @@ func (s *Service) PgClient(name string) *pg.Client {
 func (s *Service) Worker(name string) *Worker {
 	worker, found := s.Workers[name]
 	if !found {
-		program.Panicf("unknown worker %q", name)
+		program.Panic("unknown worker %q", name)
 	}
 
 	return worker

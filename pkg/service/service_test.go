@@ -9,8 +9,8 @@ import (
 	"testing"
 
 	"go.n16f.net/log"
+	"go.n16f.net/program"
 	"go.n16f.net/service/pkg/pg"
-	"go.n16f.net/service/pkg/utils"
 )
 
 type TestServiceCfg struct {
@@ -128,18 +128,18 @@ func setTestDirectory() {
 		if errors.Is(err, os.ErrNotExist) {
 			continue
 		} else if err != nil {
-			utils.Abort("cannot stat %q: %v", filePath, err)
+			program.Abort("cannot stat %q: %v", filePath, err)
 		}
 
 		break
 	}
 
 	if dirPath == "/" {
-		utils.Abort("%q not found", cfgFileName)
+		program.Abort("%q not found", cfgFileName)
 	}
 
 	if err := os.Chdir(dirPath); err != nil {
-		utils.Abort("cannot change directory to %s: %v", dirPath, err)
+		program.Abort("cannot change directory to %s: %v", dirPath, err)
 	}
 }
 
@@ -150,7 +150,7 @@ func resetTestDatabase() {
 
 	client, err := pg.NewClient(clientCfg)
 	if err != nil {
-		utils.Abort("cannot connect to the test database: %v", err)
+		program.Abort("cannot connect to the test database: %v", err)
 	}
 	defer client.Close()
 
@@ -163,7 +163,7 @@ GRANT ALL ON SCHEMA public TO postgres;
 		return pg.Exec(conn, query)
 	})
 	if err != nil {
-		utils.Abort("cannot reset test database: %v", err)
+		program.Abort("cannot reset test database: %v", err)
 	}
 }
 

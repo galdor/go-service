@@ -7,9 +7,9 @@ require (
 	github.com/stretchr/testify v1.8.3
 	go.n16f.net/ejson v0.0.0-20240820145652-4e9192313c14
 	go.n16f.net/log v0.0.0-20240820155337-9eef10dcf842
-	go.n16f.net/program v0.0.0-20240901143028-03cbb58cd2e5
+	go.n16f.net/program v0.0.0-20240905080349-5f3363143961
 	go.n16f.net/uuid v0.0.0-20240707135755-e4fd26b968ad
-	golang.org/x/exp v0.0.0-20240823005443-9b4947da3948
+	golang.org/x/exp v0.0.0-20240904232852-e7e105dedf7e
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -23,7 +23,7 @@ require (
 	github.com/rogpeppe/go-internal v1.9.0 // indirect
 	golang.org/x/crypto v0.26.0 // indirect
 	golang.org/x/sync v0.8.0 // indirect
-	golang.org/x/sys v0.24.0 // indirect
-	golang.org/x/term v0.23.0 // indirect
-	golang.org/x/text v0.17.0 // indirect
+	golang.org/x/sys v0.25.0 // indirect
+	golang.org/x/term v0.24.0 // indirect
+	golang.org/x/text v0.18.0 // indirect
 )
