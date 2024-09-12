@@ -250,6 +250,13 @@ func (s *Server) RouteId(method, pathPattern string) string {
 		return ""
 	}
 
+	// We want "/foo/{$}" to have the route id "/foo" and "/{$}" to have the
+	// route id "/" and not "".
+	pathPattern = strings.TrimSuffix(pathPattern, "/{$}")
+	if pathPattern == "" {
+		pathPattern = "/"
+	}
+
 	if s.Cfg.MethodLessRouteIds {
 		return pathPattern
 	}
