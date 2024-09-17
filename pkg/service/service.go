@@ -52,7 +52,8 @@ type ServiceCfg struct {
 
 	Workers map[string]*WorkerCfg `json:"workers"`
 
-	TemplateFuncMap map[string]interface{} `json:"-"`
+	DisableTemplateLoading bool                   `json:"-"`
+	TemplateFuncMap        map[string]interface{} `json:"-"`
 }
 
 type Service struct {
@@ -190,6 +191,10 @@ func (s *Service) initLogger() error {
 }
 
 func (s *Service) initTemplates() error {
+	if s.Cfg.DisableTemplateLoading {
+		return nil
+	}
+
 	dirPath := path.Join(s.Cfg.DataDirectory, "templates")
 
 	textTemplate, htmlTemplate, err := LoadTemplates(dirPath,
