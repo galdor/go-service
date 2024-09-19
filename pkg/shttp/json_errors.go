@@ -63,11 +63,7 @@ func (err *JSONError) UnmarshalJSON(data []byte) error {
 }
 
 func (err *JSONError) Error() string {
-	if err.Code == "" {
-		return err.Message
-	} else {
-		return fmt.Sprintf("%s: %s", err.Code, err.Message)
-	}
+	return err.Message
 }
 
 func (err *JSONError) DecodeData(target interface{}) error {
