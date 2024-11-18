@@ -8,10 +8,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"go.n16f.net/ejson"
 	"go.n16f.net/log"
 	"go.n16f.net/service/pkg/influx"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 const (
@@ -162,37 +162,32 @@ func (c *Client) WithConn(fn func(Conn) error) error {
 }
 
 func (c *Client) WithTx(fn func(Conn) error) error {
-	return c.withConn(func(conn Conn) (err error) {
+	return c.withConn(func(conn Conn) error {
 		ctx := context.Background()
 
-		if _, beginErr := conn.Exec(ctx, "BEGIN"); beginErr != nil {
-			err = fmt.Errorf("cannot begin transaction: %w", beginErr)
-			return
+		if _, err := conn.Exec(ctx, "BEGIN"); err != nil {
+			return fmt.Errorf("cannot begin transaction: %w", err)
 		}
 
-		defer func() {
-			if err != nil {
-				// If an error was already signaled, do not commit
-				return
-			}
-
-			if _, commitErr := conn.Exec(ctx, "COMMIT"); commitErr != nil {
-				err = fmt.Errorf("cannot commit transaction: %w", commitErr)
-			}
-		}()
-
-		if fnErr := fn(conn); fnErr != nil {
-			err = fnErr
-
-			_, rollbackErr := conn.Exec(ctx, "ROLLBACK")
-			if rollbackErr != nil {
+		if err := fn(conn); err != nil {
+			if _, rbErr := conn.Exec(ctx, "ROLLBACK"); rbErr != nil {
 				// There is nothing we can do here, and we do want to return the
 				// function error, so we simply log the rollback error.
-				c.Log.Error("cannot rollback transaction: %v", rollbackErr)
+				//
+				// Note that when the connection is released by withConn after a
+				// rollback failure, the connection will not be in an idle
+				// state, and Pgx will close it, as it should be.
+				c.Log.Error("cannot rollback transaction: %v", rbErr)
 			}
+
+			return err
 		}
 
-		return
+		if _, err := conn.Exec(ctx, "COMMIT"); err != nil {
+			return fmt.Errorf("cannot commit transaction: %w", err)
+		}
+
+		return nil
 	})
 }
 
