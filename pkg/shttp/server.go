@@ -179,7 +179,7 @@ func (s *Server) shutdown() {
 func (s *Server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	h := Handler{
 		Server: s,
-		Log:    s.Log.Child("", nil),
+		Log:    s.Log.Child("", log.Data{}),
 
 		ResponseWriter: NewResponseWriter(w),
 	}
@@ -243,6 +243,18 @@ func (s *Server) finalizeHandler(h *Handler, req *http.Request, pathPattern, met
 
 	h.ClientAddress = requestClientAddress(req)
 	h.RequestId = requestId(req)
+
+	if h.RouteId != "" {
+		h.Log.Data["route"] = h.RouteId
+	}
+
+	if h.ClientAddress != "" {
+		h.Log.Data["address"] = h.ClientAddress
+	}
+
+	if h.RequestId != "" {
+		h.Log.Data["request_id"] = h.RequestId
+	}
 }
 
 func (s *Server) RouteId(method, pathPattern string) string {

@@ -339,18 +339,6 @@ func (h *Handler) logRequest() {
 		"time":  reqTime.Microseconds(),
 	}
 
-	if h.PathPattern != "" {
-		data["route"] = h.RouteId
-	}
-
-	if h.ClientAddress != "" {
-		data["address"] = h.ClientAddress
-	}
-
-	if h.RequestId != "" {
-		data["request_id"] = h.RequestId
-	}
-
 	if h.errorCode != "" {
 		data["error"] = h.errorCode
 	}
