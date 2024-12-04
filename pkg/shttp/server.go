@@ -3,6 +3,7 @@ package shttp
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -42,6 +43,7 @@ type ServerCfg struct {
 	LogSuccessfulRequests bool `json:"log_successful_requests"`
 	HideInternalErrors    bool `json:"hide_internal_errors"`
 	MethodLessRouteIds    bool `json:"method_less_route_ids"`
+	ShutdownTimeout       int  `json:"shutdown_timeout"` // seconds
 }
 
 type TLSServerCfg struct {
@@ -168,11 +170,15 @@ func (s *Server) Stop() {
 }
 
 func (s *Server) shutdown() {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	timeout := time.Duration(s.Cfg.ShutdownTimeout) * time.Second
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
 	if err := s.server.Shutdown(ctx); err != nil {
-		s.Log.Error("cannot shutdown server: %v", err)
+		if !errors.Is(err, context.DeadlineExceeded) {
+			s.Log.Error("cannot shutdown server: %v", err)
+		}
 	}
 }
 
