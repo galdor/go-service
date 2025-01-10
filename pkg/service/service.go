@@ -405,16 +405,18 @@ func (s *Service) wait() {
 func (s *Service) stop() error {
 	s.Log.Debug(1, "stopping")
 
-	s.Implementation.Stop(s)
-
 	s.stopWorkers()
 
 	if s.ServiceAPI != nil {
 		s.ServiceAPI.Stop()
 	}
 
-	s.stopHTTPClients()
 	s.stopHTTPServers()
+
+	s.Implementation.Stop(s)
+
+	s.stopHTTPClients()
+
 	s.stopPgClients()
 
 	if s.Influx != nil {
