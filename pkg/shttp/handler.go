@@ -119,7 +119,7 @@ func (h *Handler) JSONRequestData(dest interface{}) error {
 // before decoding.
 //
 // 2. Extra validation steps must be performed with the same Validator object.
-func (h *Handler) JSONRequestDataExt(data []byte, dest interface{}, fn func(*ejson.Validator)) error {
+func (h *Handler) JSONRequestDataExt(data []byte, dest interface{}, fn func(*ejson.Validator) error) error {
 	if err := json.Unmarshal(data, dest); err != nil {
 		h.ReplyError(400, "invalid_request_body",
 			"invalid request body: %v", err)
@@ -132,7 +132,9 @@ func (h *Handler) JSONRequestDataExt(data []byte, dest interface{}, fn func(*ejs
 		obj.ValidateJSON(v)
 
 		if fn != nil {
-			fn(v)
+			if err := fn(v); err != nil {
+				return err
+			}
 		}
 
 		if err := v.Error(); err != nil {
