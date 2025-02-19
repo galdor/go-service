@@ -45,7 +45,8 @@ func EncodePoint(p *Point, buf *bytes.Buffer) error {
 func EncodePoints(ps Points, buf *bytes.Buffer) error {
 	for _, p := range ps {
 		if err := EncodePoint(p, buf); err != nil {
-			return err
+			return fmt.Errorf("cannot encode point for measurement %q: %w",
+				p.Measurement, err)
 		}
 
 		buf.WriteByte('\n')
