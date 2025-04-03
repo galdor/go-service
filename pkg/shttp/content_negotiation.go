@@ -93,8 +93,8 @@ func (mrs MediaRanges) SelectMediaType(mediaTypes ...string) string {
 	matchingMediaType := ""
 	weight := 0.0
 
-	for _, mt := range mediaTypes {
-		for _, mr := range mrs {
+	for _, mr := range mrs {
+		for _, mt := range mediaTypes {
 			if mr.MatchesMediaType(mt) && mr.Weight > weight {
 				matchingMediaType = mt
 				weight = mr.Weight
