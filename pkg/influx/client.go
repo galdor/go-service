@@ -63,7 +63,7 @@ func NewClient(cfg ClientCfg) (*Client, error) {
 	}
 
 	if cfg.HTTPClient == nil {
-		return nil, fmt.Errorf("missing http client")
+		return nil, fmt.Errorf("missing HTTP client")
 	}
 
 	if cfg.URI == "" {
@@ -71,7 +71,7 @@ func NewClient(cfg ClientCfg) (*Client, error) {
 	}
 	uri, err := url.Parse(cfg.URI)
 	if err != nil {
-		return nil, fmt.Errorf("invalid uri: %w", err)
+		return nil, fmt.Errorf("invalid URI: %w", err)
 	}
 
 	if cfg.BatchSize == 0 {

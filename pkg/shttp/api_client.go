@@ -37,7 +37,7 @@ func NewAPIClient(cfg APIClientCfg) (*APIClient, error) {
 
 	baseURI, err := url.Parse(cfg.BaseURI)
 	if err != nil {
-		return nil, fmt.Errorf("invalid base uri: %w", err)
+		return nil, fmt.Errorf("invalid base URI: %w", err)
 	}
 
 	c := APIClient{
@@ -55,7 +55,7 @@ func (c *APIClient) SendRequest(method, uriRefString string, reqBody, resBody an
 func (c *APIClient) SendRequestWithHeader(method, uriRefString string, header http.Header, reqBody, resBody any) (*http.Response, error) {
 	uriRef, err := url.Parse(uriRefString)
 	if err != nil {
-		return nil, fmt.Errorf("invalid uri reference: %w", err)
+		return nil, fmt.Errorf("invalid URI reference: %w", err)
 	}
 
 	uri := c.baseURI.ResolveReference(uriRef)

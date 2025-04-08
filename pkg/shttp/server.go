@@ -316,7 +316,7 @@ func (s *Server) hNotFound(w http.ResponseWriter, req *http.Request) {
 	h := requestHandler(req)
 	s.finalizeHandler(h, req, "", req.Method, nil)
 
-	h.ReplyError(404, "not_found", "http route not found")
+	h.ReplyError(404, "not_found", "HTTP route not found")
 }
 
 func requestHandler(req *http.Request) *Handler {

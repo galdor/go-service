@@ -220,7 +220,7 @@ func (s *Service) initInflux() error {
 
 	httpClient, err := shttp.NewClient(httpClientCfg)
 	if err != nil {
-		return fmt.Errorf("cannot create influx http client: %w", err)
+		return fmt.Errorf("cannot create Influx HTTP client: %w", err)
 	}
 
 	cfg := *s.Cfg.Influx
@@ -231,7 +231,7 @@ func (s *Service) initInflux() error {
 
 	client, err := influx.NewClient(cfg)
 	if err != nil {
-		return fmt.Errorf("cannot create influx client: %w", err)
+		return fmt.Errorf("cannot create Influx client: %w", err)
 	}
 
 	s.Influx = client
@@ -249,7 +249,7 @@ func (s *Service) initHTTPServers() error {
 
 		server, err := shttp.NewServer(*serverCfg)
 		if err != nil {
-			return fmt.Errorf("cannot create http server %q: %w", name, err)
+			return fmt.Errorf("cannot create HTTP server %q: %w", name, err)
 		}
 
 		s.HTTPServers[name] = server
@@ -264,7 +264,7 @@ func (s *Service) initHTTPClients() error {
 
 		client, err := shttp.NewClient(*clientCfg)
 		if err != nil {
-			return fmt.Errorf("cannot create http client %q: %w", name, err)
+			return fmt.Errorf("cannot create HTTP client %q: %w", name, err)
 		}
 
 		s.HTTPClients[name] = client
@@ -366,7 +366,7 @@ func (s *Service) start() error {
 func (s *Service) startHTTPServers() error {
 	for name, s := range s.HTTPServers {
 		if err := s.Start(); err != nil {
-			return fmt.Errorf("cannot start http server %q: %w", name, err)
+			return fmt.Errorf("cannot start HTTP server %q: %w", name, err)
 		}
 	}
 

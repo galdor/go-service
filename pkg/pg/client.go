@@ -86,7 +86,7 @@ func NewClient(cfg ClientCfg) (*Client, error) {
 
 	poolCfg, err := pgxpool.ParseConfig(cfg.URI)
 	if err != nil {
-		return nil, fmt.Errorf("invalid uri: %w", err)
+		return nil, fmt.Errorf("invalid URI: %w", err)
 	}
 
 	if cfg.ApplicationName != "" {

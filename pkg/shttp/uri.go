@@ -10,7 +10,7 @@ import (
 
 func ParseAbsoluteURI(s string, schemes []string) (*url.URL, error) {
 	if s == "" {
-		return nil, fmt.Errorf("empty uri")
+		return nil, fmt.Errorf("empty URI")
 	}
 
 	uri, err := url.Parse(s)
@@ -19,12 +19,12 @@ func ParseAbsoluteURI(s string, schemes []string) (*url.URL, error) {
 	}
 
 	if uri.Host == "" {
-		return nil, fmt.Errorf("uri is not an absolute uri")
+		return nil, fmt.Errorf("URI is not an absolute URI")
 	}
 
 	scheme := strings.ToLower(uri.Scheme)
 	if !slices.Contains(schemes, strings.ToLower(uri.Scheme)) {
-		return nil, fmt.Errorf("invalid uri scheme %q", scheme)
+		return nil, fmt.Errorf("invalid URI scheme %q", scheme)
 	}
 
 	return uri, nil
