@@ -158,6 +158,11 @@ func (h *Handler) AcceptedMediaRanges() MediaRanges {
 	return mrs
 }
 
+func (h *Handler) AddCookie(cookie *http.Cookie) {
+	header := h.ResponseWriter.Header()
+	header.Add("Set-Cookie", cookie.String())
+}
+
 func (h *Handler) SetCookie(cookie *http.Cookie) {
 	header := h.ResponseWriter.Header()
 	header.Set("Set-Cookie", cookie.String())
