@@ -1,6 +1,34 @@
 services:
+  grafana:
+    image: "grafana/grafana:11.6.0"
+    container_name: "service-grafana"
+    user: "root"
+    ports: ["3000:3000"]
+    volumes:
+      - "./docker-compose/grafana/provisioning:/etc/grafana/provisioning:ro"
+      - "grafana-data:/var/lib/grafana:rw"
+    logging: &logging
+      driver: "json-file"
+      options:
+        max-size: "10m"
+  influxdb:
+    image: "influxdb:2.7"
+    container_name: "service-influxdb"
+    ports: ["8086:8086"]
+    volumes:
+      - "influxdb-data:/var/lib/influxdb:rw"
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: "setup"
+      DOCKER_INFLUXDB_INIT_USERNAME: "admin"
+      DOCKER_INFLUXDB_INIT_PASSWORD: "adminadminadmin"
+      DOCKER_INFLUXDB_INIT_ORG: "service"
+      DOCKER_INFLUXDB_INIT_BUCKET: "main"
+      DOCKER_INFLUXDB_INIT_RETENTION: "10d"
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: "admin"
+      INFLUXDB_REPORTING_DISABLED: "true"
+    logging: *logging
   postgresql:
-    image: "postgres:15"
+    image: "postgres:17"
     command: >
       postgres -c "shared_buffers=1GB"
                -c "max_connections=10"
@@ -13,28 +41,6 @@ services:
       POSTGRES_USER: "postgres"
       POSTGRES_PASSWORD: "postgres"
       POSTGRES_DB: "service"
-    logging: &logging
-      driver: "json-file"
-      options:
-        max-size: "10m"
-  influxdb:
-    image: "influxdb:1.8"
-    container_name: "service-influxdb"
-    ports: ["8086:8086"]
-    volumes:
-      - "./docker-compose/influxdb:/docker-entrypoint-initdb.d:ro"
-      - "influxdb-data:/var/lib/influxdb:rw"
-    environment:
-      INFLUXDB_REPORTING_DISABLED: "true"
-    logging: *logging
-  grafana:
-    image: "grafana/grafana:9.3.6"
-    container_name: "service-grafana"
-    user: "root"
-    ports: ["3000:3000"]
-    volumes:
-      - "./docker-compose/grafana/provisioning:/etc/grafana/provisioning:ro"
-      - "grafana-data:/var/lib/grafana:rw"
     logging: *logging
 volumes:
   postgresql-data:

@@ -2,6 +2,11 @@ apiVersion: 1
 datasources:
   - name: "influxdb"
     type: "influxdb"
-    database: "service"
+    isDefault: true
     url: "http://service-influxdb:8086"
-    httpMode: "POST"
+    jsonData:
+      dbName: "main"
+      httpMode: "POST"
+      httpHeaderName1: 'Authorization'
+    secureJsonData:
+      httpHeaderValue1: 'Token admin'
