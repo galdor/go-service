@@ -167,19 +167,22 @@ GRANT ALL ON SCHEMA public TO postgres;
 	}
 }
 
-func TestServiceLifecycle(t *testing.T) {
+func newTestService(t *testing.T) *TestService {
+	testService := NewTestService(t)
 	readyChan := make(chan struct{})
 
-	ts := NewTestService(t)
-
 	go func() {
-		RunTest("test-service", ts, "test/test.yaml", readyChan)
+		RunTest("service", testService, "test/test.yaml", readyChan)
 	}()
 
-	select {
-	case <-readyChan:
-		ts.Service.Stop()
-	}
+	<-readyChan
+
+	return testService
+}
+
+func TestServiceLifecycle(t *testing.T) {
+	ts := newTestService(t)
+	ts.Service.Stop()
 
 	if !ts.initialized {
 		t.Errorf("service was not initialized")

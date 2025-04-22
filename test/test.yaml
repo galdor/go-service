@@ -6,6 +6,12 @@ service:
 
   data_directory: "test/data"
 
+  influx:
+    uri: "http://localhost:8086"
+    org: "service"
+    bucket: "main"
+    token: "admin"
+
   pg_clients:
     main:
       uri: "postgres://postgres:postgres@localhost:5432/service"
