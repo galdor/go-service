@@ -36,8 +36,8 @@ type Client struct {
 	uri  *url.URL
 	tags map[string]string
 
-	pointsChan chan Points
 	points     Points
+	pointMutex sync.Mutex
 
 	stopChan chan struct{}
 	wg       sync.WaitGroup
@@ -94,8 +94,6 @@ func NewClient(cfg ClientCfg) (*Client, error) {
 		uri:  uri,
 		tags: tags,
 
-		pointsChan: make(chan Points),
-
 		stopChan: make(chan struct{}),
 	}
 
@@ -118,7 +116,6 @@ func (c *Client) Stop() {
 }
 
 func (c *Client) Terminate() {
-	close(c.pointsChan)
 }
 
 func (c *Client) main() {
@@ -133,9 +130,6 @@ func (c *Client) main() {
 			c.flush()
 			return
 
-		case ps := <-c.pointsChan:
-			c.enqueuePoints(ps)
-
 		case <-timer.C:
 			c.flush()
 		}
@@ -147,14 +141,21 @@ func (c *Client) EnqueuePoint(p *Point) {
 }
 
 func (c *Client) EnqueuePoints(points Points) {
-	// We do not want to be stuck writing on c.pointsChan if the server is
-	// stopping, so we check the stop chan.
-
 	select {
 	case <-c.stopChan:
 		return
+	default:
+	}
 
-	case c.pointsChan <- points:
+	c.finalizePoints(points)
+
+	c.pointMutex.Lock()
+	c.points = append(c.points, points...)
+	flush := len(c.points) >= c.Cfg.BatchSize
+	c.pointMutex.Unlock()
+
+	if flush {
+		c.flush()
 	}
 }
 
@@ -166,50 +167,58 @@ func (c *Client) SendPoints(points Points) error {
 	// situations, we want the ability to send points directly instead of
 	// queuing them.
 
+	c.finalizePoints(points)
 	return c.sendPoints(points)
 }
 
-func (c *Client) enqueuePoints(points Points) {
+func (c *Client) finalizePoints(points Points) {
+	// Point finalization is idempotent, we rely on this property
+
 	for _, p := range points {
-		c.finalizePoint(p)
-	}
+		// We do not have to protect access to the client tag map because it is
+		// read-only after initialization.
+		if p.Tags == nil && len(c.tags) > 0 {
+			p.Tags = Tags{}
+		}
 
-	c.points = append(c.points, points...)
-
-	if len(c.points) >= c.Cfg.BatchSize {
-		c.flush()
-	}
-}
-
-func (c *Client) finalizePoint(point *Point) {
-	tags := Tags{}
-
-	for key, value := range c.tags {
-		if value != "" {
-			tags[key] = value
+		// Tags in the point override tags in the client
+		for name, value := range c.tags {
+			if _, found := p.Tags[name]; !found {
+				c.tags[name] = value
+			}
 		}
 	}
-
-	for key, value := range point.Tags {
-		if value != "" {
-			tags[key] = value
-		}
-	}
-
-	point.Tags = tags
 }
 
 func (c *Client) flush() {
-	if len(c.points) == 0 {
-		return
-	}
+	// Take points out of the queue; this is necessary to allow multiple
+	// concurrent calls to flush().
 
-	if err := c.sendPoints(c.points); err != nil {
-		c.Log.Error("cannot send points: %v", err)
-		return
-	}
-
+	c.pointMutex.Lock()
+	points := c.points
 	c.points = nil
+	c.pointMutex.Unlock()
+
+	if len(points) == 0 {
+		return
+	}
+
+	go func() {
+		if err := c.sendPoints(points); err != nil {
+			c.Log.Error("cannot send points: %v", err)
+		}
+
+		// If we cannot send the points, we put them back in the queue. Ordering
+		// does not really matter, so we add them at the end and not at the
+		// beginning because it avoids an unnecessary copy.
+		//
+		// Since point finalization is idempotent, it does not matter that it
+		// will be done again next time we flush.
+
+		c.pointMutex.Lock()
+		c.points = append(c.points, points...)
+		c.pointMutex.Unlock()
+	}()
 }
 
 func (c *Client) sendPoints(points Points) error {
