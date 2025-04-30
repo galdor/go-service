@@ -184,7 +184,7 @@ func (c *Client) finalizePoints(points Points) {
 		// Tags in the point override tags in the client
 		for name, value := range c.tags {
 			if _, found := p.Tags[name]; !found {
-				c.tags[name] = value
+				p.Tags[name] = value
 			}
 		}
 	}
