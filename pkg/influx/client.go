@@ -172,8 +172,6 @@ func (c *Client) SendPoints(points Points) error {
 }
 
 func (c *Client) finalizePoints(points Points) {
-	// Point finalization is idempotent, we rely on this property
-
 	for _, p := range points {
 		// We do not have to protect access to the client tag map because it is
 		// read-only after initialization.
@@ -211,9 +209,6 @@ func (c *Client) flush() {
 		// If we cannot send the points, we put them back in the queue. Ordering
 		// does not really matter, so we add them at the end and not at the
 		// beginning because it avoids an unnecessary copy.
-		//
-		// Since point finalization is idempotent, it does not matter that it
-		// will be done again next time we flush.
 
 		c.pointMutex.Lock()
 		c.points = append(c.points, points...)
