@@ -14,18 +14,24 @@ import (
 	"go.n16f.net/log"
 )
 
+const (
+	DefaultBatchSize      = 10_000
+	DefaultMaxQueueLength = 100_000
+)
+
 type ClientCfg struct {
 	Log        *log.Logger  `json:"-"`
 	HTTPClient *http.Client `json:"-"`
 	Hostname   string       `json:"-"`
 
-	URI         string            `json:"uri"`
-	Bucket      string            `json:"bucket"`
-	Org         string            `json:"org,omitempty"`
-	Token       string            `json:"token,omitempty"`
-	BatchSize   int               `json:"batch_size,omitempty"`
-	Tags        map[string]string `json:"tags,omitempty"`
-	LogRequests bool              `json:"log_requests,omitempty"`
+	URI            string            `json:"uri"`
+	Bucket         string            `json:"bucket"`
+	Org            string            `json:"org,omitempty"`
+	Token          string            `json:"token,omitempty"`
+	BatchSize      int               `json:"batch_size,omitempty"`
+	MaxQueueLength int               `json:"max_queue_length,omitempty"`
+	Tags           map[string]string `json:"tags,omitempty"`
+	LogRequests    bool              `json:"log_requests,omitempty"`
 }
 
 type Client struct {
@@ -75,7 +81,11 @@ func NewClient(cfg ClientCfg) (*Client, error) {
 	}
 
 	if cfg.BatchSize == 0 {
-		cfg.BatchSize = 10_000
+		cfg.BatchSize = DefaultBatchSize
+	}
+
+	if cfg.MaxQueueLength == 0 {
+		cfg.MaxQueueLength = DefaultMaxQueueLength
 	}
 
 	tags := make(map[string]string)
@@ -150,6 +160,10 @@ func (c *Client) EnqueuePoints(points Points) {
 	c.finalizePoints(points)
 
 	c.pointMutex.Lock()
+	if len(c.points)+len(points) > c.Cfg.MaxQueueLength {
+		c.pointMutex.Unlock()
+		return
+	}
 	c.points = append(c.points, points...)
 	flush := len(c.points) >= c.Cfg.BatchSize
 	c.pointMutex.Unlock()
@@ -211,7 +225,9 @@ func (c *Client) flush() {
 		// beginning because it avoids an unnecessary copy.
 
 		c.pointMutex.Lock()
-		c.points = append(c.points, points...)
+		if len(c.points)+len(points) <= c.Cfg.MaxQueueLength {
+			c.points = append(c.points, points...)
+		}
 		c.pointMutex.Unlock()
 	}()
 }
