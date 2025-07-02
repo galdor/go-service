@@ -227,6 +227,9 @@ func (c *Client) flush() {
 		c.pointMutex.Lock()
 		if len(c.points)+len(points) <= c.Cfg.MaxQueueLength {
 			c.points = append(c.points, points...)
+		} else {
+			c.Log.Info("dropping %d points: max queue length reached (%d/%d)",
+				len(points), len(c.points), c.Cfg.MaxQueueLength)
 		}
 		c.pointMutex.Unlock()
 	}()
