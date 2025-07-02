@@ -218,20 +218,20 @@ func (c *Client) flush() {
 	go func() {
 		if err := c.sendPoints(points); err != nil {
 			c.Log.Error("cannot send points: %v", err)
-		}
 
-		// If we cannot send the points, we put them back in the queue. Ordering
-		// does not really matter, so we add them at the end and not at the
-		// beginning because it avoids an unnecessary copy.
+			// If we cannot send the points, we put them back in the queue.
+			// Ordering does not really matter, so we add them at the end and
+			// not at the beginning because it avoids an unnecessary copy.
 
-		c.pointMutex.Lock()
-		if len(c.points)+len(points) <= c.Cfg.MaxQueueLength {
-			c.points = append(c.points, points...)
-		} else {
-			c.Log.Info("dropping %d points: max queue length reached (%d/%d)",
-				len(points), len(c.points), c.Cfg.MaxQueueLength)
+			c.pointMutex.Lock()
+			if len(c.points)+len(points) <= c.Cfg.MaxQueueLength {
+				c.points = append(c.points, points...)
+			} else {
+				c.Log.Info("dropping %d points: max queue length reached "+
+					"(%d/%d)", len(points), len(c.points), c.Cfg.MaxQueueLength)
+			}
+			c.pointMutex.Unlock()
 		}
-		c.pointMutex.Unlock()
 	}()
 }
 
