@@ -104,7 +104,7 @@ func (h *Handler) RequestData() ([]byte, error) {
 	return data, nil
 }
 
-func (h *Handler) JSONRequestData(dest interface{}) error {
+func (h *Handler) JSONRequestData(dest any) error {
 	data, err := h.RequestData()
 	if err != nil {
 		return err
@@ -119,7 +119,7 @@ func (h *Handler) JSONRequestData(dest interface{}) error {
 // before decoding.
 //
 // 2. Extra validation steps must be performed with the same Validator object.
-func (h *Handler) JSONRequestDataExt(data []byte, dest interface{}, fn func(*ejson.Validator) error) error {
+func (h *Handler) JSONRequestDataExt(data []byte, dest any, fn func(*ejson.Validator) error) error {
 	if err := json.Unmarshal(data, dest); err != nil {
 		h.ReplyError(400, "invalid_request_body",
 			"invalid request body: %v", err)
@@ -197,7 +197,7 @@ func (h *Handler) ReplyText(status int, body string) {
 	h.Reply(status, strings.NewReader(body))
 }
 
-func (h *Handler) ReplyJSON(status int, value interface{}) {
+func (h *Handler) ReplyJSON(status int, value any) {
 	var buf bytes.Buffer
 	encoder := json.NewEncoder(&buf)
 	encoder.SetIndent("", "  ")
@@ -205,19 +205,19 @@ func (h *Handler) ReplyJSON(status int, value interface{}) {
 	h.replyJSON(status, value, encoder, &buf)
 }
 
-func (h *Handler) ReplyCompactJSON(status int, value interface{}) {
+func (h *Handler) ReplyCompactJSON(status int, value any) {
 	var buf bytes.Buffer
 	encoder := json.NewEncoder(&buf)
 
 	h.replyJSON(status, value, encoder, &buf)
 }
 
-func (h *Handler) replyJSON(status int, value interface{}, encoder *json.Encoder, buf *bytes.Buffer) {
+func (h *Handler) replyJSON(status int, value any, encoder *json.Encoder, buf *bytes.Buffer) {
 	header := h.ResponseWriter.Header()
 	header.Set("Content-Type", "application/json")
 
 	if err := encoder.Encode(value); err != nil {
-		h.Log.Error("cannot encode json response: %v", err)
+		h.Log.Error("cannot encode JSON response: %v", err)
 		h.ResponseWriter.WriteHeader(500)
 		return
 	}
@@ -225,11 +225,11 @@ func (h *Handler) replyJSON(status int, value interface{}, encoder *json.Encoder
 	h.Reply(status, buf)
 }
 
-func (h *Handler) ReplyError(status int, code, format string, args ...interface{}) {
+func (h *Handler) ReplyError(status int, code, format string, args ...any) {
 	h.ReplyErrorData(status, code, nil, format, args...)
 }
 
-func (h *Handler) ReplyErrorData(status int, code string, data ErrorData, format string, args ...interface{}) {
+func (h *Handler) ReplyErrorData(status int, code string, data ErrorData, format string, args ...any) {
 	h.errorCode = code
 	h.Server.errorHandler(h, status, code, fmt.Sprintf(format, args...), data)
 }
@@ -243,7 +243,7 @@ func (h *Handler) ReplyValidationErrors(err ejson.ValidationErrors) {
 		"invalid request body:\n%v", err)
 }
 
-func (h *Handler) ReplyInternalError(status int, format string, args ...interface{}) {
+func (h *Handler) ReplyInternalError(status int, format string, args ...any) {
 	msg := strings.TrimRight(fmt.Sprintf(format, args...), "\n")
 	h.Log.Error("internal error: %s", msg)
 
@@ -296,20 +296,19 @@ func (h *Handler) ReplyFile(filePath string) {
 
 func (h *Handler) ReplyChunk(r io.Reader) error {
 	if _, err := io.Copy(h.ResponseWriter, r); err != nil {
-		err2 := fmt.Errorf("cannot write response chunk: %v", err)
+		err2 := fmt.Errorf("cannot copy response chunk: %v", err)
 		h.Log.Error("%v", err2)
 		return err2
 	}
 
 	h.ResponseWriter.(http.Flusher).Flush()
-
 	return nil
 }
 
-func (h *Handler) ReplyJSONChunk(value interface{}) error {
+func (h *Handler) ReplyJSONChunk(value any) error {
 	data, err := json.Marshal(value)
 	if err != nil {
-		err2 := fmt.Errorf("cannot encode json response chunk: %v", err)
+		err2 := fmt.Errorf("cannot encode JSON response chunk: %v", err)
 		h.Log.Error("%v", err2)
 		return err2
 	}
