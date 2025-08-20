@@ -168,6 +168,10 @@ func (h *Handler) SetCookie(cookie *http.Cookie) {
 	header.Set("Set-Cookie", cookie.String())
 }
 
+func (h *Handler) SSELastEventId() string {
+	return h.Request.Header.Get("Last-Event-ID")
+}
+
 func (h *Handler) Reply(status int, r io.Reader) {
 	h.ResponseWriter.WriteHeader(status)
 
@@ -316,6 +320,93 @@ func (h *Handler) ReplyJSONChunk(value any) error {
 	data = append(data, '\n')
 
 	return h.ReplyChunk(bytes.NewReader(data))
+}
+
+func (h *Handler) ReplySSE(status int) error {
+	header := h.ResponseWriter.Header()
+	header.Set("Content-Type", "text/event-stream")
+
+	h.ResponseWriter.WriteHeader(status)
+	return nil
+}
+
+func (h *Handler) WriteSSE(id, event, data string) error {
+	var buf bytes.Buffer
+
+	if id != "" {
+		buf.WriteString("id: ")
+		buf.WriteString(id)
+		buf.WriteByte('\n')
+	}
+
+	if event != "" {
+		buf.WriteString("event: ")
+		buf.WriteString(event)
+		buf.WriteByte('\n')
+	}
+
+	if data != "" {
+		buf.WriteString("data: ")
+		buf.WriteString(data)
+		buf.WriteByte('\n')
+	}
+
+	buf.WriteByte('\n')
+
+	if _, err := io.Copy(h.ResponseWriter, &buf); err != nil {
+		return err
+	}
+
+	h.ResponseWriter.(http.Flusher).Flush()
+	return nil
+}
+
+func (h *Handler) WriteSSEComment(comment string) error {
+	line := ": " + comment + "\n\n"
+	if _, err := h.ResponseWriter.Write([]byte(line)); err != nil {
+		return err
+	}
+
+	h.ResponseWriter.(http.Flusher).Flush()
+	return nil
+}
+
+func (h *Handler) WriteJSONSSE(id, event string, value any) error {
+	data, err := json.Marshal(value)
+	if err != nil {
+		err2 := fmt.Errorf("cannot encode JSON event data: %v", err)
+		h.Log.Error("%v", err2)
+		return err2
+	}
+
+	return h.WriteSSE(id, event, string(data))
+}
+
+func (h *Handler) WriteSSEError(code, format string, args ...any) {
+	msg := strings.TrimRight(fmt.Sprintf(format, args...), "\n")
+
+	err := JSONError{
+		Code:    code,
+		Message: msg,
+	}
+
+	h.WriteJSONSSE("", "error", &err)
+}
+
+func (h *Handler) WriteSSEInternalError(format string, args ...any) {
+	msg := strings.TrimRight(fmt.Sprintf(format, args...), "\n")
+	h.Log.Error("internal error: %s", msg)
+
+	if h.Server.Cfg.HideInternalErrors {
+		msg = "internal error"
+	}
+
+	err := JSONError{
+		Code:    "internal_error",
+		Message: msg,
+	}
+
+	h.WriteJSONSSE("", "error", &err)
 }
 
 func rewriteAssetPath(path string) string {
