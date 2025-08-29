@@ -22,8 +22,9 @@ type Worker struct {
 	Cfg WorkerCfg
 	Log *log.Logger
 
-	stopChan chan struct{}
-	wg       sync.WaitGroup
+	wakeupChan chan struct{}
+	stopChan   chan struct{}
+	wg         sync.WaitGroup
 }
 
 func NewWorker(cfg WorkerCfg) (*Worker, error) {
@@ -35,7 +36,8 @@ func NewWorker(cfg WorkerCfg) (*Worker, error) {
 		Cfg: cfg,
 		Log: cfg.Log,
 
-		stopChan: make(chan struct{}),
+		wakeupChan: make(chan struct{}),
+		stopChan:   make(chan struct{}),
 	}
 
 	return &w, nil
@@ -51,6 +53,8 @@ func (w *Worker) Start() error {
 func (w *Worker) Stop() {
 	close(w.stopChan)
 	w.wg.Wait()
+
+	close(w.wakeupChan)
 }
 
 func (w *Worker) main() {
@@ -61,32 +65,50 @@ func (w *Worker) main() {
 	timer := time.NewTimer(initialDelay)
 	defer timer.Stop()
 
+	callFunc := func() {
+		delay := 5 * time.Second
+
+		func() {
+			defer func() {
+				if v := recover(); v != nil {
+					msg := program.RecoverValueString(v)
+					trace := program.StackTrace(0, 20, true)
+
+					w.Log.Error("panic: %s\n%s", msg, trace)
+				}
+			}()
+
+			var err error
+			delay, err = w.Cfg.WorkerFunc(w)
+			if err != nil {
+				w.Log.Error("%v", err)
+			}
+		}()
+
+		timer.Reset(delay)
+	}
+
 	for {
 		select {
 		case <-w.stopChan:
 			return
 
+		case <-w.wakeupChan:
+			callFunc()
+
 		case <-timer.C:
-			delay := 5 * time.Second
-
-			func() {
-				defer func() {
-					if v := recover(); v != nil {
-						msg := program.RecoverValueString(v)
-						trace := program.StackTrace(0, 20, true)
-
-						w.Log.Error("panic: %s\n%s", msg, trace)
-					}
-				}()
-
-				var err error
-				delay, err = w.Cfg.WorkerFunc(w)
-				if err != nil {
-					w.Log.Error("%v", err)
-				}
-			}()
-
-			timer.Reset(delay)
+			callFunc()
 		}
+	}
+}
+
+func (w *Worker) WakeUp() {
+	// Note how we do not wait for the worker to read the channel. If it is not
+	// currently sleeping (i.e. it is executing the worker function), there is
+	// no point in waiting for the worker function to return.
+
+	select {
+	case w.wakeupChan <- struct{}{}:
+	default:
 	}
 }
