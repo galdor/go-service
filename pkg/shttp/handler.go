@@ -34,6 +34,7 @@ type Handler struct {
 	Method      string
 	PathPattern string
 	RouteId     string // based on the method and path pattern
+	Options     RouteOptions
 
 	Request        *http.Request
 	Query          url.Values
@@ -420,6 +421,10 @@ func rewriteAssetPath(path string) string {
 }
 
 func (h *Handler) logRequest() {
+	if h.Options.DisableAccessLog {
+		return
+	}
+
 	req := h.Request
 	w := h.ResponseWriter.(*ResponseWriter)
 

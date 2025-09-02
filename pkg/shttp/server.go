@@ -25,6 +25,10 @@ var (
 
 type RouteFunc func(*Handler)
 
+type RouteOptions struct {
+	DisableAccessLog bool
+}
+
 type ErrorData interface{}
 type ErrorHandler func(*Handler, int, string, string, ErrorData)
 
@@ -203,8 +207,14 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 
 func (s *Server) Route(pathPattern, method string, routeFunc RouteFunc) {
+	s.RouteWithOptions(pathPattern, method, routeFunc, RouteOptions{})
+}
+
+func (s *Server) RouteWithOptions(pathPattern, method string, routeFunc RouteFunc, options RouteOptions) {
 	handlerFunc := func(w http.ResponseWriter, req *http.Request) {
 		h := requestHandler(req)
+		h.Options = options
+
 		s.finalizeHandler(h, req, pathPattern, method, routeFunc)
 
 		defer func() {
