@@ -256,7 +256,7 @@ func (h *Handler) ReplyInternalError(status int, format string, args ...any) {
 		msg = "internal error"
 	}
 
-	h.ReplyError(status, "internal_error", msg)
+	h.ReplyError(status, "internal_error", "%s", msg)
 }
 
 func (h *Handler) ReplyNotImplemented(feature string) {
@@ -278,7 +278,8 @@ func (h *Handler) ReplyFile(filePath string) {
 	}
 
 	if !info.Mode().IsRegular() {
-		h.ReplyError(400, "%q is not a regular file", filePath)
+		h.ReplyError(400, "non_regular_file",
+			"%q is not a regular file", filePath)
 		return
 	}
 
