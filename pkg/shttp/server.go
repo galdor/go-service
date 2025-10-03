@@ -26,7 +26,8 @@ var (
 type RouteFunc func(*Handler)
 
 type RouteOptions struct {
-	DisableAccessLog bool
+	MethodlessRouteIds bool
+	DisableAccessLog   bool
 }
 
 type ErrorData interface{}
@@ -46,7 +47,6 @@ type ServerCfg struct {
 
 	LogSuccessfulRequests bool `json:"log_successful_requests"`
 	HideInternalErrors    bool `json:"hide_internal_errors"`
-	MethodLessRouteIds    bool `json:"method_less_route_ids"`
 	ShutdownTimeout       int  `json:"shutdown_timeout"` // seconds
 }
 
@@ -215,7 +215,7 @@ func (s *Server) RouteWithOptions(pathPattern, method string, routeFunc RouteFun
 		h := requestHandler(req)
 		h.Options = options
 
-		s.finalizeHandler(h, req, pathPattern, method, routeFunc)
+		s.finalizeHandler(h, req, pathPattern, method, routeFunc, &options)
 
 		defer func() {
 			if v := recover(); v != nil {
@@ -249,13 +249,13 @@ func (s *Server) RouteWithOptions(pathPattern, method string, routeFunc RouteFun
 	}
 }
 
-func (s *Server) finalizeHandler(h *Handler, req *http.Request, pathPattern, method string, routeFunc RouteFunc) {
+func (s *Server) finalizeHandler(h *Handler, req *http.Request, pathPattern, method string, routeFunc RouteFunc, options *RouteOptions) {
 	h.Request = req // the request may have been modified by the muxer
 	h.Query = req.URL.Query()
 
 	h.Method = method
 	h.PathPattern = pathPattern
-	h.RouteId = s.RouteId(method, pathPattern)
+	h.RouteId = s.RouteId(method, pathPattern, options)
 
 	h.ClientAddress = requestClientAddress(req)
 	h.RequestId = requestId(req)
@@ -273,7 +273,7 @@ func (s *Server) finalizeHandler(h *Handler, req *http.Request, pathPattern, met
 	}
 }
 
-func (s *Server) RouteId(method, pathPattern string) string {
+func (s *Server) RouteId(method, pathPattern string, options *RouteOptions) string {
 	if pathPattern == "" {
 		return ""
 	}
@@ -285,7 +285,7 @@ func (s *Server) RouteId(method, pathPattern string) string {
 		pathPattern = "/"
 	}
 
-	if s.Cfg.MethodLessRouteIds {
+	if options.MethodlessRouteIds {
 		return pathPattern
 	}
 
@@ -324,7 +324,7 @@ func AdaptativeErrorHandler(h *Handler, status int, code string, msg string, dat
 
 func (s *Server) hNotFound(w http.ResponseWriter, req *http.Request) {
 	h := requestHandler(req)
-	s.finalizeHandler(h, req, "", req.Method, nil)
+	s.finalizeHandler(h, req, "", req.Method, nil, nil)
 
 	h.ReplyError(404, "not_found", "HTTP route not found")
 }
