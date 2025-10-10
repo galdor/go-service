@@ -2,16 +2,13 @@ package service
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"path/filepath"
 	"text/template"
 
-	"go.n16f.net/ejson"
+	"go.n16f.net/eyaml"
 	"go.n16f.net/service/pkg/stemplate"
-	"gopkg.in/yaml.v3"
 )
 
 func LoadCfg(filePath string, templateData, dest interface{}) error {
@@ -25,28 +22,8 @@ func LoadCfg(filePath string, templateData, dest interface{}) error {
 		return err
 	}
 
-	yamlDecoder := yaml.NewDecoder(bytes.NewReader(data))
-
-	var yamlValue interface{}
-	if err := yamlDecoder.Decode(&yamlValue); err != nil && err != io.EOF {
-		return fmt.Errorf("cannot decode yaml data: %w", err)
-	}
-
-	jsonValue, err := YAMLValueToJSONValue(yamlValue)
-	if err != nil {
-		return fmt.Errorf("invalid yaml data: %w", err)
-	}
-
-	jsonData, err := json.Marshal(jsonValue)
-	if err != nil {
-		return fmt.Errorf("cannot generate json data: %w", err)
-	}
-
-	if err := ejson.Unmarshal(jsonData, dest); err != nil {
-		return fmt.Errorf("cannot decode json data: %w", err)
-	}
-
-	return nil
+	decoder := eyaml.NewDecoder(data)
+	return decoder.Decode(dest)
 }
 
 func RenderCfg(filePath string, templateContent []byte, templateData interface{}) ([]byte, error) {
