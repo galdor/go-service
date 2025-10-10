@@ -4,6 +4,7 @@ import (
 	"fmt"
 	htmltemplate "html/template"
 	"io/fs"
+	"maps"
 	"os"
 	"path/filepath"
 	"strings"
@@ -14,7 +15,10 @@ func LoadTextTemplates(dirPath string, funcMap texttemplate.FuncMap) (*texttempl
 	rootTpl := texttemplate.New("")
 
 	rootTpl = rootTpl.Option("missingkey=error")
-	rootTpl = rootTpl.Funcs(funcMap)
+
+	funcs := maps.Clone(Funcs)
+	maps.Copy(funcs, funcMap)
+	rootTpl = rootTpl.Funcs(funcs)
 
 	err := filepath.Walk(dirPath,
 		func(filePath string, info fs.FileInfo, err error) error {

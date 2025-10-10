@@ -6,27 +6,13 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"os"
 	"path/filepath"
-	"strings"
 	"text/template"
 
 	"go.n16f.net/ejson"
+	"go.n16f.net/service/pkg/stemplate"
 	"gopkg.in/yaml.v3"
 )
-
-var cfgTemplateFuncs = map[string]interface{}{
-	"env": os.Getenv,
-
-	"quote": func(s string) string {
-		data, _ := json.Marshal(s)
-		return string(data)
-	},
-
-	"split": func(sep, s string) []string {
-		return strings.Split(s, sep)
-	},
-}
 
 func LoadCfg(filePath string, templateData, dest interface{}) error {
 	baseData, err := ioutil.ReadFile(filePath)
@@ -66,7 +52,7 @@ func LoadCfg(filePath string, templateData, dest interface{}) error {
 func RenderCfg(filePath string, templateContent []byte, templateData interface{}) ([]byte, error) {
 	tpl := template.New(filepath.Base(filePath))
 	tpl.Option("missingkey=error")
-	tpl.Funcs(cfgTemplateFuncs)
+	tpl.Funcs(stemplate.Funcs)
 
 	if _, err := tpl.Parse(string(templateContent)); err != nil {
 		return nil, fmt.Errorf("cannot parse template: %w", err)
