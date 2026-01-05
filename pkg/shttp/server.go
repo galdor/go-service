@@ -34,14 +34,14 @@ type ErrorData interface{}
 type ErrorHandler func(*Handler, int, string, string, ErrorData)
 
 type ServerCfg struct {
-	Log           *log.Logger    `json:"-"`
-	ErrorChan     chan<- error   `json:"-"`
-	InfluxClient  *influx.Client `json:"-"`
-	Name          string         `json:"-"`
-	ErrorHandler  ErrorHandler   `json:"-"`
-	DataDirectory string         `json:"-"`
+	Log          *log.Logger    `json:"-"`
+	ErrorChan    chan<- error   `json:"-"`
+	InfluxClient *influx.Client `json:"-"`
+	Name         string         `json:"-"`
+	ErrorHandler ErrorHandler   `json:"-"`
 
-	Address string `json:"address"`
+	SocketType ServerSocketType `json:"socket_type"`
+	Address    string           `json:"address"`
 
 	TLS *TLSServerCfg `json:"tls"`
 
@@ -50,9 +50,34 @@ type ServerCfg struct {
 	ShutdownTimeout       int  `json:"shutdown_timeout"` // seconds
 }
 
+func (cfg *ServerCfg) ValidateJSON(v *ejson.Validator) {
+	if cfg.SocketType != "" {
+		v.CheckStringValue("socket_type", cfg.SocketType, ServerSocketTypeValues)
+	}
+
+	v.CheckOptionalObject("tls", cfg.TLS)
+}
+
+type ServerSocketType string
+
+const (
+	ServerSocketTypeTCP  ServerSocketType = "tcp"
+	ServerSocketTypeUNIX ServerSocketType = "unix"
+)
+
+var ServerSocketTypeValues = []ServerSocketType{
+	ServerSocketTypeTCP,
+	ServerSocketTypeUNIX,
+}
+
 type TLSServerCfg struct {
 	Certificate string `json:"certificate"`
 	PrivateKey  string `json:"private_key"`
+}
+
+func (cfg *TLSServerCfg) ValidateJSON(v *ejson.Validator) {
+	v.CheckStringNotEmpty("certificate", cfg.Certificate)
+	v.CheckStringNotEmpty("private_key", cfg.PrivateKey)
 }
 
 type Server struct {
@@ -68,15 +93,6 @@ type Server struct {
 	wg        sync.WaitGroup
 }
 
-func (cfg *ServerCfg) ValidateJSON(v *ejson.Validator) {
-	v.CheckOptionalObject("tls", cfg.TLS)
-}
-
-func (cfg *TLSServerCfg) ValidateJSON(v *ejson.Validator) {
-	v.CheckStringNotEmpty("certificate", cfg.Certificate)
-	v.CheckStringNotEmpty("private_key", cfg.PrivateKey)
-}
-
 func NewServer(cfg ServerCfg) (*Server, error) {
 	if cfg.Log == nil {
 		cfg.Log = log.DefaultLogger("http_server")
@@ -90,8 +106,8 @@ func NewServer(cfg ServerCfg) (*Server, error) {
 		return nil, fmt.Errorf("missing or empty server name")
 	}
 
-	if cfg.DataDirectory == "" {
-		return nil, fmt.Errorf("missing or empty data directory")
+	if cfg.SocketType == "" {
+		cfg.SocketType = ServerSocketTypeTCP
 	}
 
 	if cfg.Address == "" {
@@ -134,7 +150,18 @@ func NewServer(cfg ServerCfg) (*Server, error) {
 }
 
 func (s *Server) Start() error {
-	listener, err := net.Listen("tcp", s.Cfg.Address)
+	var network string
+
+	switch s.Cfg.SocketType {
+	case ServerSocketTypeTCP:
+		network = "tcp"
+	case ServerSocketTypeUNIX:
+		network = "unix"
+	default:
+		program.Panic("invalid server socket type %q", s.Cfg.SocketType)
+	}
+
+	listener, err := net.Listen(network, s.Cfg.Address)
 	if err != nil {
 		return fmt.Errorf("cannot listen on %q: %w", s.Cfg.Address, err)
 	}
