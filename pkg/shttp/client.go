@@ -87,6 +87,14 @@ func NewClient(cfg ClientCfg) (*Client, error) {
 	client := &http.Client{
 		Timeout:   time.Duration(*cfg.RequestTimeout) * time.Second,
 		Transport: NewRoundTripper(transport, &cfg),
+
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			// Strip authorization data when redirecting to a different host.
+			if len(via) > 0 && req.URL.Host != via[0].URL.Host {
+				req.Header.Del("Authorization")
+			}
+			return nil
+		},
 	}
 
 	if cfg.DisableRedirections {
