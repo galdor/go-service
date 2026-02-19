@@ -173,6 +173,22 @@ func (h *Handler) SSELastEventId() string {
 	return h.Request.Header.Get("Last-Event-ID")
 }
 
+func (h *Handler) SSEInt64LastEventId() (int64, error) {
+	s := h.SSELastEventId()
+	if s == "" {
+		return 0, nil
+	}
+
+	i64, err := strconv.ParseInt(s, 10, 64)
+	if err != nil || i64 < 1 {
+		err = errors.New("invalid SSE last event id")
+		h.ReplyError(400, "invalid_sse_last_event_id", "%v", err)
+		return 0, err
+	}
+
+	return i64, nil
+}
+
 func (h *Handler) Reply(status int, r io.Reader) {
 	h.ResponseWriter.WriteHeader(status)
 
