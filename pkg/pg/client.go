@@ -47,6 +47,9 @@ type Client struct {
 
 	connectionAcquisitionTimeout time.Duration
 
+	listenerMutex sync.Mutex
+	listeners     map[string]*Listener
+
 	stopChan chan struct{}
 	wg       sync.WaitGroup
 }
@@ -117,6 +120,8 @@ func NewClient(cfg ClientCfg) (*Client, error) {
 
 		Pool: pool,
 
+		listeners: make(map[string]*Listener),
+
 		stopChan: make(chan struct{}),
 	}
 
@@ -153,6 +158,12 @@ func (c *Client) updateSchemas() error {
 func (c *Client) Close() {
 	close(c.stopChan)
 	c.wg.Wait()
+
+	c.listenerMutex.Lock()
+	defer c.listenerMutex.Unlock()
+	for _, listener := range c.listeners {
+		listener.Close()
+	}
 
 	c.Pool.Close()
 }
@@ -218,6 +229,10 @@ func (c *Client) withConn(fn func(Conn) error) error {
 
 func TakeAdvisoryTxLock(conn Conn, id1, id2 uint32) error {
 	return Exec(conn, `SELECT pg_advisory_xact_lock($1, $2)`, id1, id2)
+}
+
+func Notify(conn Conn, channel, payload string) error {
+	return Exec(conn, `SELECT pg_notify($1, $2)`, channel, payload)
 }
 
 func (c *Client) influxProbeMain() {

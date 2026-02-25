@@ -211,6 +211,10 @@ func (s *Server) shutdown() {
 			s.Log.Error("cannot shutdown server: %v", err)
 		}
 	}
+
+	// Make sure to close all connections if shutdown timed out or was
+	// interrupted in an way.
+	s.server.Close()
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
