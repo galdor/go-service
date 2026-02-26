@@ -380,7 +380,7 @@ func (h *Handler) WriteSSE(id, event, data string) error {
 }
 
 func (h *Handler) WriteSSEComment(comment string) error {
-	line := ": " + comment + "\n\n"
+	line := ": " + comment + "\n"
 	if _, err := h.ResponseWriter.Write([]byte(line)); err != nil {
 		return err
 	}
