@@ -8,6 +8,7 @@ import (
 	"runtime"
 	"testing"
 
+	"go.n16f.net/ejson"
 	"go.n16f.net/log"
 	"go.n16f.net/program"
 	"go.n16f.net/service/pkg/pg"
@@ -15,6 +16,10 @@ import (
 
 type TestServiceCfg struct {
 	Service ServiceCfg `json:"service"`
+}
+
+func (cfg *TestServiceCfg) ValidateJSON(v *ejson.Validator) {
+	v.CheckObject("service", &cfg.Service)
 }
 
 type TestService struct {
@@ -36,12 +41,11 @@ func NewTestService(t *testing.T) *TestService {
 	return &TestService{t: t}
 }
 
-func (ts *TestService) DefaultCfg() interface{} {
+func (ts *TestService) DefaultCfg() ejson.Validatable {
 	return &ts.Cfg
 }
 
-func (ts *TestService) ValidateCfg() error {
-	return nil
+func (ts *TestService) ValidateCfg(v *ejson.Validator) {
 }
 
 func (ts *TestService) ServiceCfg() *ServiceCfg {

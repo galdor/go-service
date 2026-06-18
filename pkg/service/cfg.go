@@ -12,6 +12,10 @@ import (
 )
 
 func LoadCfg(filePath string, templateData, dest interface{}) error {
+	return LoadCfg2(filePath, templateData, dest, &eyaml.DecodingOptions{})
+}
+
+func LoadCfg2(filePath string, templateData, dest interface{}, opts *eyaml.DecodingOptions) error {
 	baseData, err := ioutil.ReadFile(filePath)
 	if err != nil {
 		return fmt.Errorf("cannot read %q: %w", filePath, err)
@@ -23,7 +27,8 @@ func LoadCfg(filePath string, templateData, dest interface{}) error {
 	}
 
 	decoder := eyaml.NewDecoder(data)
-	return decoder.Decode(dest)
+
+	return decoder.Decode2(dest, opts)
 }
 
 func RenderCfg(filePath string, templateContent []byte, templateData interface{}) ([]byte, error) {

@@ -16,26 +16,25 @@ type ExampleCfg struct {
 	Service service.ServiceCfg `json:"service"`
 }
 
+func (cfg *ExampleCfg) ValidateJSON(v *ejson.Validator) {
+	v.CheckObject("service", &cfg.Service)
+}
+
 type Example struct {
 	Cfg     ExampleCfg
 	Service *service.Service
 	Log     *log.Logger
 }
 
-func (cfg *ExampleCfg) ValidateJSON(v *ejson.Validator) {
-	v.CheckObject("service", &cfg.Service)
-}
-
 func NewExample() *Example {
 	return &Example{}
 }
 
-func (e *Example) DefaultCfg() interface{} {
+func (e *Example) DefaultCfg() ejson.Validatable {
 	return &e.Cfg
 }
 
-func (e *Example) ValidateCfg() error {
-	return nil
+func (e *Example) ValidateCfg(v *ejson.Validator) {
 }
 
 func (e *Example) ServiceCfg() *service.ServiceCfg {

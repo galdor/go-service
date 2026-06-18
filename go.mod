@@ -5,8 +5,8 @@ go 1.26.2
 require (
 	github.com/jackc/pgx/v5 v5.10.0
 	github.com/stretchr/testify v1.11.1
-	go.n16f.net/ejson v0.0.0-20260423162845-bb521b87e0a7
-	go.n16f.net/eyaml v0.0.0-20240822141541-96f4fcff8320
+	go.n16f.net/ejson v0.0.0-20260618102742-132cb74ea35c
+	go.n16f.net/eyaml v0.0.0-20260618103140-7c0c8685d954
 	go.n16f.net/log v0.0.0-20260316165020-cff59212b5b0
 	go.n16f.net/program v0.0.0-20260409112752-a081c4918366
 	go.n16f.net/uuid v0.0.0-20251120121934-372c52119b7f

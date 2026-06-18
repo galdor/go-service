@@ -11,6 +11,7 @@ import (
 	texttemplate "text/template"
 
 	"go.n16f.net/ejson"
+	"go.n16f.net/eyaml"
 	"go.n16f.net/log"
 	"go.n16f.net/program"
 	"go.n16f.net/service/pkg/influx"
@@ -19,8 +20,8 @@ import (
 )
 
 type ServiceImplementation interface {
-	DefaultCfg() interface{}
-	ValidateCfg() error
+	DefaultCfg() ejson.Validatable
+	ValidateCfg(*ejson.Validator)
 	ServiceCfg() *ServiceCfg
 	Init(*Service) error
 	Start(*Service) error
@@ -492,11 +493,17 @@ func Run(name, description string, implementation ServiceImplementation) {
 			"Program": p,
 		}
 
-		if err := LoadCfg(cfgPath, templateData, cfg); err != nil {
+		opts := eyaml.DecodingOptions{DisableValidation: true}
+
+		if err := LoadCfg2(cfgPath, templateData, cfg, &opts); err != nil {
 			p.Fatal("cannot load configuration: %v", err)
 		}
 
-		if err := implementation.ValidateCfg(); err != nil {
+		v := ejson.NewValidator()
+		cfg.ValidateJSON(v)
+		implementation.ValidateCfg(v)
+
+		if err := v.Error(); err != nil {
 			p.Fatal("invalid configuration: %v", err)
 		}
 	}
@@ -566,11 +573,17 @@ func RunTest(name string, implementation ServiceImplementation, cfgPath string, 
 	cfg := implementation.DefaultCfg()
 
 	if cfgPath != "" {
-		if err := LoadCfg(cfgPath, nil, cfg); err != nil {
+		opts := eyaml.DecodingOptions{DisableValidation: true}
+
+		if err := LoadCfg2(cfgPath, nil, cfg, &opts); err != nil {
 			program.Abort("cannot load configuration: %v", err)
 		}
 
-		if err := implementation.ValidateCfg(); err != nil {
+		v := ejson.NewValidator()
+		cfg.ValidateJSON(v)
+		implementation.ValidateCfg(v)
+
+		if err := v.Error(); err != nil {
 			program.Abort("invalid configuration: %v", err)
 		}
 	}
