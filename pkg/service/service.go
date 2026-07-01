@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	htmltemplate "html/template"
+	"net/http"
 	"os"
 	"os/signal"
 	"path"
@@ -260,6 +261,9 @@ func (s *Service) initHTTPServers() error {
 
 func (s *Service) initHTTPClients() error {
 	for name, clientCfg := range s.Cfg.HTTPClients {
+		clientCfg.Header = make(http.Header)
+		clientCfg.Header.Set("User-Agent", s.Name)
+
 		clientCfg.Log = s.Log.Child("http_client", log.Data{"client": name})
 
 		client, err := shttp.NewClient(*clientCfg)
