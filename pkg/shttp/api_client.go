@@ -133,7 +133,8 @@ func HandleAPIClientError(res *http.Response, body []byte) error {
 	var baseError error
 
 	var apiError JSONError
-	if err := json.Unmarshal(body, &apiError); err == nil {
+	err := json.Unmarshal(body, &apiError)
+	if err == nil && apiError.Message != "" {
 		baseError = &apiError
 	} else {
 		baseError = errors.New(string(body))
